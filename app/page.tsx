@@ -1,5 +1,5 @@
 import { sql } from '@/lib/db';
-import { Card, CardBody, CardHeader, Input, Chip } from '@heroui/react';
+import { Card, Input, Chip } from '@heroui/react';
 
 interface Book {
   book_id: number;
@@ -63,15 +63,15 @@ export default async function Home({
                   className="w-full h-48 object-cover"
                 />
               )}
-              <CardHeader className="flex-col items-start">
-                <p className="text-lg font-medium">{book.book_name}</p>
-                <p className="text-sm text-gray-500">by {book.auther}</p>
-              </CardHeader>
-              <CardBody>
+              <Card.Header>
+                <Card.Title>{book.book_name}</Card.Title>
+                <Card.Description>by {book.auther}</Card.Description>
+              </Card.Header>
+              <Card.Content>
                 {book.age_group && (
                   <Chip size="sm" variant="flat">{book.age_group}</Chip>
                 )}
-              </CardBody>
+              </Card.Content>
             </Card>
           ))}
         </div>
