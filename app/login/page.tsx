@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, Input, Button } from '@heroui/react';
+import { Card, Input, Label, Button } from '@heroui/react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,20 +41,26 @@ export default function LoginPage() {
         </Card.Header>
         <Card.Content>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <Input
-              type="text"
-              label="Username"
-              value={userName}
-              onValueChange={setUserName}
-              isRequired
-            />
-            <Input
-              type="password"
-              label="Password"
-              value={password}
-              onValueChange={setPassword}
-              isRequired
-            />
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="userName">Username</Label>
+              <Input
+                id="userName"
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
             {error && (
               <p className="text-red-500 text-sm">{error}</p>
             )}
