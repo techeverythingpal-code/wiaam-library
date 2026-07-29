@@ -34,7 +34,7 @@ export default async function AdminPage() {
                         <Card.Title>Books</Card.Title>
                     </Card.Header>
                     <Card.Content>
-                        <p className="text-sm text-gray-500">Manage the book catalog</p>
+                        <p className="text-sm text-gray-500">Manage the book catalog yes</p>
                     </Card.Content>
                 </Card>
 

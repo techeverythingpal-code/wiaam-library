@@ -38,7 +38,7 @@ export default async function Home({
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-semibold mb-6">Village Library</h1>
+      <h1 className="text-3xl font-semibold mb-6">Village Library yooo</h1>
 
       <form action="/" method="GET" className="mb-8">
         <Input
