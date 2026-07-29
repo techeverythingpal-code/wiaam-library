@@ -2,8 +2,24 @@
 @import "@heroui/styles";
 
 :root {
-  --background: #ffffff;
+  --background: #fff9f0;
   --foreground: #171717;
+
+  /* Playful accent: warm coral-pink */
+  --accent: oklch(0.68 0.19 25);
+  --accent-foreground: oklch(0.99 0 0);
+
+  /* Friendlier status colors */
+  --success: oklch(0.75 0.16 155);
+  --warning: oklch(0.8 0.16 80);
+  --danger: oklch(0.65 0.22 20);
+
+  /* Rounder corners everywhere */
+  --radius: 0.85rem;
+}
+
+[data-vibrant-palette="true"] {
+  /* enables richer soft-color backgrounds on Chips etc. */
 }
 
 @theme inline {
