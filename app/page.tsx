@@ -46,7 +46,6 @@ export default async function Home({
           name="q"
           defaultValue={query}
           placeholder="Search by title or author..."
-          size="lg"
         />
       </form>
 
@@ -69,7 +68,7 @@ export default async function Home({
               </Card.Header>
               <Card.Content>
                 {book.age_group && (
-                  <Chip size="sm" variant="flat">{book.age_group}</Chip>
+                  <Chip size="sm" variant="soft">{book.age_group}</Chip>
                 )}
               </Card.Content>
             </Card>
