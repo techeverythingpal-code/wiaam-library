@@ -52,6 +52,36 @@ async function getRecentBorrows(): Promise<RecentBorrow[]> {
   ` as RecentBorrow[];
 }
 
+const statCards = [
+    {
+        href: '/admin/books',
+        label: 'Books',
+        icon: '📚',
+        cardBg: 'bg-gradient-to-br from-orange-50 to-orange-100/60 border-orange-200/60',
+        iconBg: 'bg-orange-200/70',
+        numberColor: 'text-orange-600',
+        description: 'Manage the book catalog',
+    },
+    {
+        href: '/admin/students',
+        label: 'Students',
+        icon: '🎒',
+        cardBg: 'bg-gradient-to-br from-teal-50 to-teal-100/60 border-teal-200/60',
+        iconBg: 'bg-teal-200/70',
+        numberColor: 'text-teal-600',
+        description: 'Manage student records',
+    },
+    {
+        href: '/admin/borrows',
+        label: 'Active Borrows',
+        icon: '🔄',
+        cardBg: 'bg-gradient-to-br from-pink-50 to-pink-100/60 border-pink-200/60',
+        iconBg: 'bg-pink-200/70',
+        numberColor: 'text-pink-600',
+        description: 'Track borrowed books',
+    },
+] as const;
+
 export default async function AdminPage() {
     const cookieStore = await cookies();
     const sessionUserId = cookieStore.get('session_user')?.value;
@@ -62,84 +92,86 @@ export default async function AdminPage() {
         getRecentBorrows(),
     ]);
 
+    const statValues = [stats.bookCount, stats.studentCount, stats.activeBorrowCount];
+
     return (
-        <main className="max-w-5xl mx-auto px-4 py-10">
-            <div className="flex items-center justify-between mb-8">
-                <h1 className="text-3xl font-semibold">
-                    Welcome, {user?.user_name ?? 'Librarian'}
-                </h1>
-                <form action="/api/logout" method="POST">
-                    <Button type="submit" variant="outline">Log Out</Button>
-                </form>
+        <main className="min-h-screen">
+            {/* Colored header banner */}
+            <div className="bg-gradient-to-r from-amber-100 via-orange-100 to-rose-100 border-b border-orange-200/50">
+                <div className="max-w-5xl mx-auto px-6 py-10 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-4xl font-bold tracking-tight">
+                            👋 Welcome, {user?.user_name ?? 'Librarian'}
+                        </h1>
+                        <p className="text-gray-600 mt-2 text-lg">
+                            Here&apos;s what&apos;s happening in your library today
+                        </p>
+                    </div>
+                    <form action="/api/logout" method="POST">
+                        <Button type="submit" variant="outline" className="bg-white/70">
+                            Log Out
+                        </Button>
+                    </form>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                <Link href="/admin/books">
-                    <Card>
-                        <Card.Header>
-                            <Card.Title>Books</Card.Title>
-                        </Card.Header>
-                        <Card.Content>
-                            <p className="text-3xl font-semibold mb-1">{stats.bookCount}</p>
-                            <p className="text-sm text-gray-500">Manage the book catalog</p>
-                        </Card.Content>
-                    </Card>
-                </Link>
-
-                <Link href="/admin/students">
-                    <Card>
-                        <Card.Header>
-                            <Card.Title>Students</Card.Title>
-                        </Card.Header>
-                        <Card.Content>
-                            <p className="text-3xl font-semibold mb-1">{stats.studentCount}</p>
-                            <p className="text-sm text-gray-500">Manage student records</p>
-                        </Card.Content>
-                    </Card>
-                </Link>
-
-                <Link href="/admin/borrows">
-                    <Card>
-                        <Card.Header>
-                            <Card.Title>Active Borrows</Card.Title>
-                        </Card.Header>
-                        <Card.Content>
-                            <p className="text-3xl font-semibold mb-1">{stats.activeBorrowCount}</p>
-                            <p className="text-sm text-gray-500">Track borrowed books</p>
-                        </Card.Content>
-                    </Card>
-                </Link>
-            </div>
-
-            <Card>
-                <Card.Header>
-                    <Card.Title>Recent Activity</Card.Title>
-                </Card.Header>
-                <Card.Content>
-                    {recentBorrows.length === 0 ? (
-                        <p className="text-sm text-gray-500">No borrow activity yet.</p>
-                    ) : (
-                        <div className="flex flex-col gap-3">
-                            {recentBorrows.map((borrow) => (
-                                <div
-                                    key={borrow.borrow_id}
-                                    className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0 last:pb-0"
-                                >
-                                    <div>
-                                        <p className="font-medium">{borrow.book_name}</p>
-                                        <p className="text-sm text-gray-500">
-                                            borrowed by {borrow.student_name} · {new Date(borrow.date_borrow).toLocaleDateString()}
-                                        </p>
+            <div className="max-w-5xl mx-auto px-6 py-10">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+                    {statCards.map((stat, i) => (
+                        <Link key={stat.href} href={stat.href}>
+                            <Card
+                                className={`${stat.cardBg} border-2 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 h-full`}
+                            >
+                                <Card.Content className="p-6">
+                                    <div className={`${stat.iconBg} w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-sm`}>
+                                        {stat.icon}
                                     </div>
-                                    <Chip size="sm" variant="soft">
-                                        {borrow.flag ? 'Active' : 'Returned'}
-                                    </Chip>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </Card.Content>
-            </Card>
+                                    <p className={`text-5xl font-extrabold ${stat.numberColor} mb-1`}>
+                                        {statValues[i]}
+                                    </p>
+                                    <p className="text-lg font-semibold">{stat.label}</p>
+                                    <p className="text-sm text-gray-600 mt-1">{stat.description}</p>
+                                </Card.Content>
+                            </Card>
+                        </Link>
+                    ))}
+                </div>
+
+                <Card className="border-2 border-gray-100">
+                    <Card.Header className="pb-2">
+                        <Card.Title className="text-xl">✨ Recent Activity</Card.Title>
+                    </Card.Header>
+                    <Card.Content>
+                        {recentBorrows.length === 0 ? (
+                            <p className="text-gray-500 py-6 text-center">
+                                No borrow activity yet — it&apos;ll show up here once students start borrowing books.
+                            </p>
+                        ) : (
+                            <div className="flex flex-col gap-1">
+                                {recentBorrows.map((borrow) => (
+                                    <div
+                                        key={borrow.borrow_id}
+                                        className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xl">📖</span>
+                                            <div>
+                                                <p className="font-medium">{borrow.book_name}</p>
+                                                <p className="text-sm text-gray-500">
+                                                    borrowed by {borrow.student_name} · {new Date(borrow.date_borrow).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Chip size="sm" variant="soft" color={borrow.flag ? 'warning' : 'success'}>
+                                            {borrow.flag ? 'Active' : 'Returned'}
+                                        </Chip>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </Card.Content>
+                </Card>
+            </div>
         </main>
     );
 }
