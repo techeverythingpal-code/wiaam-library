@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { sql } from '@/lib/db';
 import { Card, Button, Chip } from '@heroui/react';
+import PageHeader from '@/components/PageHeader';
 
 async function getUser(userId: string) {
     const rows = await sql`
@@ -96,24 +97,18 @@ export default async function AdminPage() {
 
     return (
         <main className="min-h-screen">
-            {/* Colored header banner */}
-            <div className="bg-gradient-to-r from-amber-100 via-orange-100 to-rose-100 border-b border-orange-200/50">
-                <div className="max-w-5xl mx-auto px-6 py-10 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-4xl font-bold tracking-tight">
-                            👋 Welcome, {user?.user_name ?? 'Librarian'}
-                        </h1>
-                        <p className="text-gray-600 mt-2 text-lg">
-                            Here&apos;s what&apos;s happening in your library today
-                        </p>
-                    </div>
+            <PageHeader
+                emoji="👋"
+                title={`Welcome, ${user?.user_name ?? 'Librarian'}`}
+                subtitle="Here's what's happening in your library today"
+                action={
                     <form action="/api/logout" method="POST">
                         <Button type="submit" variant="outline" className="bg-white/70">
                             Log Out
                         </Button>
                     </form>
-                </div>
-            </div>
+                }
+            />
 
             <div className="max-w-5xl mx-auto px-6 py-10">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
