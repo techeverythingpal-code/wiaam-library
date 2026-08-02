@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Key } from 'react-aria-components';
+import type { Key } from '@heroui/react';
 import { Card, Input, Label, Button, Select, ListBox } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
 
