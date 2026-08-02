@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Fragment } from 'react';
 import Link from 'next/link';
 import { Card, Button, Chip } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
@@ -112,11 +112,8 @@ export default function StudentsView({ students }: { students: StudentWithBorrow
                                     const isExpanded = expandedIds.has(student.student_id);
 
                                     return (
-                                        <>
-                                            <tr
-                                                key={student.student_id}
-                                                className="border-b border-gray-100 last:border-0"
-                                            >
+                                        <Fragment key={student.student_id}>
+                                            <tr className="border-b border-gray-100 last:border-0">
                                                 <td className="px-4 py-3">{student.student_id}</td>
                                                 <td className="px-4 py-3 font-medium">{student.student_name}</td>
                                                 <td className="px-4 py-3">{student.grade ?? '—'}</td>
@@ -149,7 +146,7 @@ export default function StudentsView({ students }: { students: StudentWithBorrow
                                                 </td>
                                             </tr>
                                             {isExpanded && student.borrows.length > 0 && (
-                                                <tr key={`${student.student_id}-history`} className="bg-gray-50/50 border-b border-gray-100">
+                                                <tr className="bg-gray-50/50 border-b border-gray-100">
                                                     <td></td>
                                                     <td colSpan={6} className="px-4 py-3">
                                                         <div className="flex flex-col gap-2">
@@ -171,7 +168,7 @@ export default function StudentsView({ students }: { students: StudentWithBorrow
                                                     </td>
                                                 </tr>
                                             )}
-                                        </>
+                                        </Fragment>
                                     );
                                 })}
                             </tbody>
