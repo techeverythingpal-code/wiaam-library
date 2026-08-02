@@ -45,14 +45,14 @@ export default function StudentsView({ students }: { students: StudentWithBorrow
                 <div className="flex gap-2 mb-6">
                     <Button
                         size="sm"
-                        variant={viewMode === 'cards' ? 'solid' : 'outline'}
+                        variant={viewMode === 'cards' ? 'primary' : 'outline'}
                         onClick={() => setViewMode('cards')}
                     >
                         Cards
                     </Button>
                     <Button
                         size="sm"
-                        variant={viewMode === 'table' ? 'solid' : 'outline'}
+                        variant={viewMode === 'table' ? 'primary' : 'outline'}
                         onClick={() => setViewMode('table')}
                     >
                         Detailed List
