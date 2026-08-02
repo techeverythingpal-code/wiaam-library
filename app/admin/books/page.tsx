@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { sql } from '@/lib/db';
-import { Card, Button } from '@heroui/react';
+import { Card, Button, Chip } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
 
 interface Book {
@@ -34,28 +34,32 @@ export default async function AdminBooksPage() {
                 }
             />
 
-            <div className="max-w-4xl mx-auto px-6 py-10">
+            <div className="max-w-5xl mx-auto px-6 py-10">
                 {books.length === 0 ? (
-                    <p className="text-gray-500 py-6 text-center">No books yet.</p>
+                    <Card className="border-2 border-gray-100">
+                        <Card.Content>
+                            <p className="text-gray-500 py-6 text-center">No books yet.</p>
+                        </Card.Content>
+                    </Card>
                 ) : (
-                    <div className="flex flex-col gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                         {books.map((book) => (
-                            <Card key={book.book_id} className="border-2 border-gray-100">
-                                <Card.Content className="flex items-center justify-between">
+                            <Card
+                                key={book.book_id}
+                                className="border-2 border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                            >
+                                <Card.Content className="flex flex-col gap-3">
                                     <div>
-                                        <p className="font-medium">
-                                            #{book.book_id} — {book.book_name}
-                                        </p>
-                                        <p className="text-sm text-gray-500">
-                                            by {book.auther}
-                                            {book.age_group ? ` · ${book.age_group}` : ''}
-                                        </p>
+                                        <p className="text-xs text-gray-400">#{book.book_id}</p>
+                                        <p className="font-semibold text-lg leading-snug">{book.book_name}</p>
+                                        <p className="text-sm text-gray-500">by {book.auther}</p>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <Link href={`/admin/books/${book.book_id}/edit`}>
-                                            <Button variant="outline">Edit</Button>
-                                        </Link>
-                                    </div>
+                                    {book.age_group && (
+                                        <Chip size="sm" variant="soft">{book.age_group}</Chip>
+                                    )}
+                                    <Link href={`/admin/books/${book.book_id}/edit`} className="mt-auto">
+                                        <Button variant="outline" className="w-full">Edit</Button>
+                                    </Link>
                                 </Card.Content>
                             </Card>
                         ))}

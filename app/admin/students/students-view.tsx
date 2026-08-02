@@ -41,7 +41,7 @@ export default function StudentsView({ students }: { students: StudentWithBorrow
                 }
             />
 
-            <div className="max-w-4xl mx-auto px-6 py-10">
+            <div className="max-w-5xl mx-auto px-6 py-10">
                 <div className="flex gap-2 mb-6">
                     <Button
                         size="sm"
@@ -66,27 +66,31 @@ export default function StudentsView({ students }: { students: StudentWithBorrow
                         </Card.Content>
                     </Card>
                 ) : viewMode === 'cards' ? (
-                    <div className="flex flex-col gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                         {students.map((student) => {
                             const activeCount = student.borrows.filter((b) => b.flag).length;
                             return (
-                                <Card key={student.student_id} className="border-2 border-gray-100">
-                                    <Card.Content className="flex items-center justify-between">
+                                <Card
+                                    key={student.student_id}
+                                    className="border-2 border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                                >
+                                    <Card.Content className="flex flex-col gap-3">
                                         <div>
-                                            <p className="font-medium">
-                                                #{student.student_id} — {student.student_name}
-                                            </p>
+                                            <p className="text-xs text-gray-400">#{student.student_id}</p>
+                                            <p className="font-semibold text-lg leading-snug">{student.student_name}</p>
                                             <p className="text-sm text-gray-500">
                                                 {student.grade ? `Grade ${student.grade}` : 'No grade'}
                                                 {student.phone ? ` · ${student.phone}` : ''}
-                                                {activeCount > 0 ? ` · ${activeCount} active borrow${activeCount > 1 ? 's' : ''}` : ''}
                                             </p>
                                         </div>
-                                        <div className="flex gap-2">
-                                            <Link href={`/admin/students/${student.student_id}/edit`}>
-                                                <Button variant="outline">Edit</Button>
-                                            </Link>
-                                        </div>
+                                        {activeCount > 0 && (
+                                            <Chip size="sm" variant="soft" color="warning">
+                                                {activeCount} active borrow{activeCount > 1 ? 's' : ''}
+                                            </Chip>
+                                        )}
+                                        <Link href={`/admin/students/${student.student_id}/edit`} className="mt-auto">
+                                            <Button variant="outline" className="w-full">Edit</Button>
+                                        </Link>
                                     </Card.Content>
                                 </Card>
                             );
