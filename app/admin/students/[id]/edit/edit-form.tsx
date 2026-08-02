@@ -1,0 +1,129 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Card, Input, Label, Button } from '@heroui/react';
+import PageHeader from '@/components/PageHeader';
+
+interface Student {
+    student_id: number;
+    student_name: string;
+    grade: string | null;
+    phone: string | null;
+}
+
+export default function EditStudentForm({ student }: { student: Student }) {
+    const router = useRouter();
+    const [studentName, setStudentName] = useState(student.student_name);
+    const [grade, setGrade] = useState(student.grade ?? '');
+    const [phone, setPhone] = useState(student.phone ?? '');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        const res = await fetch(`/api/students/${student.student_id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                studentName,
+                grade: grade || null,
+                phone: phone || null,
+            }),
+        });
+
+        setLoading(false);
+
+        if (res.ok) {
+            router.push('/admin/students');
+            router.refresh();
+        } else {
+            const data = await res.json();
+            setError(data.error ?? 'Failed to update student');
+        }
+    }
+
+    async function handleDelete() {
+        if (!confirm(`Delete "${student.student_name}"? This cannot be undone.`)) {
+            return;
+        }
+
+        setLoading(true);
+        const res = await fetch(`/api/students/${student.student_id}`, {
+            method: 'DELETE',
+        });
+        setLoading(false);
+
+        if (res.ok) {
+            router.push('/admin/students');
+            router.refresh();
+        } else {
+            const data = await res.json();
+            setError(data.error ?? 'Failed to delete student');
+        }
+    }
+
+    return (
+        <main className="min-h-screen">
+            <PageHeader
+                emoji="🎒"
+                title={`Edit Student #${student.student_id}`}
+                subtitle={student.student_name}
+            />
+
+            <div className="max-w-md mx-auto px-6 py-10">
+                <Card className="border-2 border-gray-100">
+                    <Card.Content>
+                        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                            <div className="flex flex-col gap-1">
+                                <Label htmlFor="studentName">Name</Label>
+                                <Input
+                                    id="studentName"
+                                    type="text"
+                                    value={studentName}
+                                    onChange={(e) => setStudentName(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <Label htmlFor="grade">Grade (optional)</Label>
+                                <Input
+                                    id="grade"
+                                    type="text"
+                                    value={grade}
+                                    onChange={(e) => setGrade(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <Label htmlFor="phone">Phone (optional)</Label>
+                                <Input
+                                    id="phone"
+                                    type="text"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                />
+                            </div>
+                            {error && <p className="text-red-500 text-sm">{error}</p>}
+                            <div className="flex gap-2">
+                                <Button type="submit" isDisabled={loading}>
+                                    {loading ? 'Saving...' : 'Save Changes'}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    isDisabled={loading}
+                                    onClick={handleDelete}
+                                >
+                                    Delete
+                                </Button>
+                            </div>
+                        </form>
+                    </Card.Content>
+                </Card>
+            </div>
+        </main>
+    );
+}
