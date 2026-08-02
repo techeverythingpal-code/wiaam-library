@@ -1,73 +1,80 @@
-import Link from 'next/link';
 import { sql } from '@/lib/db';
-import { Card, Button } from '@heroui/react';
-import PageHeader from '@/components/PageHeader';
+import StudentsView from './students-view';
 
-interface Student {
+export interface StudentBorrow {
+    borrow_id: number;
+    book_name: string;
+    date_borrow: string;
+    date_back: string | null;
+    flag: boolean;
+}
+
+export interface StudentWithBorrows {
     student_id: number;
     student_name: string;
     grade: string | null;
     phone: string | null;
+    borrows: StudentBorrow[];
 }
 
-async function getStudents(): Promise<Student[]> {
-    return await sql`
-    SELECT student_id, student_name, grade, phone
-    FROM student
-    ORDER BY student_id ASC
-  ` as Student[];
+interface StudentRow {
+    student_id: number;
+    student_name: string;
+    grade: string | null;
+    phone: string | null;
+    borrow_id: number | null;
+    book_name: string | null;
+    date_borrow: string | null;
+    date_back: string | null;
+    flag: boolean | null;
+}
+
+async function getStudentsWithBorrows(): Promise<StudentWithBorrows[]> {
+    const rows = (await sql`
+    SELECT
+      s.student_id,
+      s.student_name,
+      s.grade,
+      s.phone,
+      b.borrow_id,
+      bk.book_name,
+      b.date_borrow,
+      b.date_back,
+      b.flag
+    FROM student s
+    LEFT JOIN borrow b ON b.student_id = s.student_id
+    LEFT JOIN book bk ON bk.book_id = b.book_id
+    ORDER BY s.student_id ASC, b.date_borrow DESC
+  `) as StudentRow[];
+
+    const studentMap = new Map<number, StudentWithBorrows>();
+
+    for (const row of rows) {
+        if (!studentMap.has(row.student_id)) {
+            studentMap.set(row.student_id, {
+                student_id: row.student_id,
+                student_name: row.student_name,
+                grade: row.grade,
+                phone: row.phone,
+                borrows: [],
+            });
+        }
+
+        if (row.borrow_id !== null) {
+            studentMap.get(row.student_id)!.borrows.push({
+                borrow_id: row.borrow_id,
+                book_name: row.book_name!,
+                date_borrow: row.date_borrow!,
+                date_back: row.date_back,
+                flag: row.flag!,
+            });
+        }
+    }
+
+    return Array.from(studentMap.values());
 }
 
 export default async function StudentsPage() {
-    const students = await getStudents();
-
-    return (
-        <main className="min-h-screen">
-            <PageHeader
-                emoji="🎒"
-                title="Manage Students"
-                subtitle="Keep track of your library's young readers"
-                action={
-                    <Link href="/admin/students/new">
-                        <Button>Add Student</Button>
-                    </Link>
-                }
-            />
-
-            <div className="max-w-4xl mx-auto px-6 py-10">
-                {students.length === 0 ? (
-                    <Card className="border-2 border-gray-100">
-                        <Card.Content>
-                            <p className="text-gray-500 py-6 text-center">
-                                No students yet.
-                            </p>
-                        </Card.Content>
-                    </Card>
-                ) : (
-                    <div className="flex flex-col gap-3">
-                        {students.map((student) => (
-                            <Card key={student.student_id} className="border-2 border-gray-100">
-                                <Card.Content className="flex items-center justify-between">
-                                    <div>
-                                        <p className="font-medium">
-                                            #{student.student_id} — {student.student_name}
-                                        </p>
-                                        <p className="text-sm text-gray-500">
-                                            {student.grade ? `Grade ${student.grade}` : 'No grade'}
-                                            {student.phone ? ` · ${student.phone}` : ''}
-                                        </p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Link href={`/admin/students/${student.student_id}/edit`}>
-                                            <Button variant="outline">Edit</Button>
-                                        </Link>
-                                    </div>
-                                </Card.Content>
-                            </Card>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </main>
-    );
+    const students = await getStudentsWithBorrows();
+    return <StudentsView students={students} />;
 }
