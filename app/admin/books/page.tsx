@@ -28,9 +28,14 @@ export default async function AdminBooksPage() {
                 title="Manage Books"
                 subtitle="Add, edit, and browse the library catalog"
                 action={
-                    <Link href="/admin/books/new">
-                        <Button>Add Book</Button>
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        <Link href="/admin">
+                            <Button variant="outline">Back to Home</Button>
+                        </Link>
+                        <Link href="/admin/books/new">
+                            <Button>Add Book</Button>
+                        </Link>
+                    </div>
                 }
             />
 

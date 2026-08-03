@@ -35,9 +35,14 @@ export default function StudentsView({ students }: { students: StudentWithBorrow
                 title="Manage Students"
                 subtitle="Keep track of your library's young readers"
                 action={
-                    <Link href="/admin/students/new">
-                        <Button>Add Student</Button>
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        <Link href="/admin">
+                            <Button variant="outline">Back to Home</Button>
+                        </Link>
+                        <Link href="/admin/students/new">
+                            <Button>Add Student</Button>
+                        </Link>
+                    </div>
                 }
             />
 

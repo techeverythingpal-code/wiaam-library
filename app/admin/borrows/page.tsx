@@ -39,9 +39,14 @@ export default async function BorrowsPage() {
                 title="Manage Borrows"
                 subtitle="Track which books are out and when they're due back"
                 action={
-                    <Link href="/admin/borrows/new">
-                        <Button>New Borrow</Button>
-                    </Link>
+                    <div className="flex items-center gap-3">
+                        <Link href="/admin">
+                            <Button variant="outline">Back to Home</Button>
+                        </Link>
+                        <Link href="/admin/borrows/new">
+                            <Button>New Borrow</Button>
+                        </Link>
+                    </div>
                 }
             />
 
