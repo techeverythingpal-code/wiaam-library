@@ -1,5 +1,6 @@
 import { sql } from '@/lib/db';
-import { Card, Input, Chip } from '@heroui/react';
+import { Card, Input, Chip, Button } from '@heroui/react';
+import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 
 interface Book {
@@ -43,6 +44,11 @@ export default async function Home({
         emoji="📚"
         title="مكان إلنا"
         subtitle="Browse and discover books for kids"
+        action={
+          <Link href="/login">
+            <Button variant="outline">Admin Login</Button>
+          </Link>
+        }
       />
 
       <div className="max-w-5xl mx-auto px-6 py-10">
