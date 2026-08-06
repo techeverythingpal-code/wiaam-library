@@ -12,6 +12,7 @@ interface Book {
 }
 
 async function getBooks(query: string): Promise<Book[]> {
+  await new Promise(resolve => setTimeout(resolve, 3000)); // TEMP: force 3s delay to test loading screen
   if (query.trim() === '') {
     return await sql`
       SELECT book_id, book_name, auther, age_group, book_cover
