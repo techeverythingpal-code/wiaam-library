@@ -18,8 +18,13 @@ export default function Loading() {
                 loop
                 autoplay
                 style={{ width: 240, height: 240 }}
-                onLoad={() => console.log('[DEBUG] animation onLoad fired')}
-                onLoadError={(e: any) => console.log('[DEBUG] animation onLoadError:', e)}
+                dotLottieRefCallback={(dotLottie) => {
+                    console.log('[DEBUG] dotLottieRefCallback fired, instance:', dotLottie);
+                    if (dotLottie) {
+                        dotLottie.addEventListener('load', () => console.log('[DEBUG] animation load event'));
+                        dotLottie.addEventListener('loadError', (e: any) => console.log('[DEBUG] animation loadError event:', e));
+                    }
+                }}
             />
             <p className="text-gray-500 text-lg">Loading books...</p>
         </div>
