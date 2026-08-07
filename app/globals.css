@@ -39,6 +39,9 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+html[dir="rtl"] body {
+  font-family: var(--font-cairo), var(--font-geist-sans), sans-serif;
+}
 
 /* HTML: <div class="loader"></div> */
 /*.loader {
