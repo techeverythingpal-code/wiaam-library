@@ -18,11 +18,9 @@
   --radius: 0.85rem;
 }
 
-[data-vibrant-palette="true"] {
-  /* enables richer soft-color backgrounds on Chips etc. */
-}
+/* enables richer soft-color backgrounds on Chips etc. */
 
-@theme inline {
+:root {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
