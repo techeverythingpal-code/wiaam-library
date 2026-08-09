@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import { Card, Button, Chip } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
 import ReturnButton from './return-button';
+import { getLocale, t } from '@/lib/i18n';
 
 interface Borrow {
     borrow_id: number;
@@ -30,21 +31,23 @@ async function getBorrows(): Promise<Borrow[]> {
 }
 
 export default async function BorrowsPage() {
-    const borrows = await getBorrows();
+    const [borrows, locale] = await Promise.all([getBorrows(), getLocale()]);
+    const { borrows: text } = t(locale);
 
     return (
         <main className="min-h-screen">
             <PageHeader
                 emoji="🔄"
-                title="Manage Borrows"
-                subtitle="Track which books are out and when they're due back"
+                title={text.title}
+                subtitle={text.subtitle}
+                locale={locale}
                 action={
                     <div className="flex items-center gap-3">
                         <Link href="/admin">
-                            <Button variant="outline">Back to Home</Button>
+                            <Button variant="outline">{text.backToHome}</Button>
                         </Link>
                         <Link href="/admin/borrows/new">
-                            <Button>New Borrow</Button>
+                            <Button>{text.newBorrow}</Button>
                         </Link>
                     </div>
                 }
@@ -55,7 +58,7 @@ export default async function BorrowsPage() {
                     <Card className="border-2 border-gray-100">
                         <Card.Content>
                             <p className="text-gray-500 py-6 text-center">
-                                No borrows yet.
+                                {text.noBorrows}
                             </p>
                         </Card.Content>
                     </Card>
@@ -69,18 +72,23 @@ export default async function BorrowsPage() {
                                             #{borrow.borrow_id} — {borrow.book_name}
                                         </p>
                                         <p className="text-sm text-gray-500">
-                                            {borrow.student_name} · borrowed{' '}
+                                            {borrow.student_name} · {text.borrowed}{' '}
                                             {new Date(borrow.date_borrow).toLocaleDateString()}
                                             {borrow.date_back
-                                                ? ` · returned ${new Date(borrow.date_back).toLocaleDateString()}`
+                                                ? ` · ${text.returnedOn} ${new Date(borrow.date_back).toLocaleDateString()}`
                                                 : ''}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-3">
                                         <Chip size="sm" variant="soft" color={borrow.flag ? 'warning' : 'success'}>
-                                            {borrow.flag ? 'Active' : 'Returned'}
+                                            {borrow.flag ? text.active : text.returned}
                                         </Chip>
-                                        {borrow.flag && <ReturnButton borrowId={borrow.borrow_id} />}
+                                        {borrow.flag && (
+                                            <ReturnButton
+                                                borrowId={borrow.borrow_id}
+                                                text={{ saving: text.saving, markReturned: text.markReturned }}
+                                            />
+                                        )}
                                     </div>
                                 </Card.Content>
                             </Card>

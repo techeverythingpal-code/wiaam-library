@@ -2,6 +2,7 @@ import { sql } from '@/lib/db';
 import { Card, Input, Chip, Button } from '@heroui/react';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
+import { getLocale, t } from '@/lib/i18n';
 
 interface Book {
   book_id: number;
@@ -12,7 +13,6 @@ interface Book {
 }
 
 async function getBooks(query: string): Promise<Book[]> {
-  //await new Promise(resolve => setTimeout(resolve, 1000)); // TEMP: force 3s delay to test loading screen
   if (query.trim() === '') {
     return await sql`
       SELECT book_id, book_name, auther, age_group, book_cover
@@ -37,17 +37,19 @@ export default async function Home({
 }) {
   const { q } = await searchParams;
   const query = q ?? '';
-  const books = await getBooks(query);
+  const [books, locale] = await Promise.all([getBooks(query), getLocale()]);
+  const { home } = t(locale);
 
   return (
     <main className="min-h-screen">
       <PageHeader
         emoji="📚"
         title="مكان إلنا"
-        subtitle="Browse and discover books for kids"
+        subtitle={home.subtitle}
+        locale={locale}
         action={
           <Link href="/login">
-            <Button variant="outline">Admin Login</Button>
+            <Button variant="outline">{home.adminLogin}</Button>
           </Link>
         }
       />
@@ -58,12 +60,12 @@ export default async function Home({
             type="text"
             name="q"
             defaultValue={query}
-            placeholder="Search by title or author..."
+            placeholder={home.searchPlaceholder}
           />
         </form>
 
         {books.length === 0 ? (
-          <p className="text-gray-500 py-6 text-center">No books found.</p>
+          <p className="text-gray-500 py-6 text-center">{home.noBooks}</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {books.map((book) => (
@@ -80,7 +82,7 @@ export default async function Home({
                 )}
                 <Card.Header>
                   <Card.Title>{book.book_name}</Card.Title>
-                  <Card.Description>by {book.auther}</Card.Description>
+                  <Card.Description>{home.by} {book.auther}</Card.Description>
                 </Card.Header>
                 <Card.Content>
                   {book.age_group && (

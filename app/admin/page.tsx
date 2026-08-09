@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { sql } from '@/lib/db';
 import { Card, Button, Chip } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
+import { getLocale, t } from '@/lib/i18n';
 
 async function getUser(userId: string) {
     const rows = await sql`
@@ -53,58 +54,61 @@ async function getRecentBorrows(): Promise<RecentBorrow[]> {
   ` as RecentBorrow[];
 }
 
-const statCards = [
-    {
-        href: '/admin/books',
-        label: 'Books',
-        icon: '📚',
-        cardBg: 'bg-gradient-to-br from-orange-50 to-orange-100/60 border-orange-200/60',
-        iconBg: 'bg-orange-200/70',
-        numberColor: 'text-orange-600',
-        description: 'Manage the book catalog',
-    },
-    {
-        href: '/admin/students',
-        label: 'Students',
-        icon: '🎒',
-        cardBg: 'bg-gradient-to-br from-teal-50 to-teal-100/60 border-teal-200/60',
-        iconBg: 'bg-teal-200/70',
-        numberColor: 'text-teal-600',
-        description: 'Manage student records',
-    },
-    {
-        href: '/admin/borrows',
-        label: 'Active Borrows',
-        icon: '🔄',
-        cardBg: 'bg-gradient-to-br from-pink-50 to-pink-100/60 border-pink-200/60',
-        iconBg: 'bg-pink-200/70',
-        numberColor: 'text-pink-600',
-        description: 'Track borrowed books',
-    },
-] as const;
-
 export default async function AdminPage() {
     const cookieStore = await cookies();
     const sessionUserId = cookieStore.get('session_user')?.value;
 
-    const [user, stats, recentBorrows] = await Promise.all([
+    const [user, stats, recentBorrows, locale] = await Promise.all([
         sessionUserId ? getUser(sessionUserId) : Promise.resolve(undefined),
         getStats(),
         getRecentBorrows(),
+        getLocale(),
     ]);
 
+    const { admin } = t(locale);
     const statValues = [stats.bookCount, stats.studentCount, stats.activeBorrowCount];
+
+    const statCards = [
+        {
+            href: '/admin/books',
+            label: admin.books,
+            icon: '📚',
+            cardBg: 'bg-gradient-to-br from-orange-50 to-orange-100/60 border-orange-200/60',
+            iconBg: 'bg-orange-200/70',
+            numberColor: 'text-orange-600',
+            description: admin.booksDesc,
+        },
+        {
+            href: '/admin/students',
+            label: admin.students,
+            icon: '🎒',
+            cardBg: 'bg-gradient-to-br from-teal-50 to-teal-100/60 border-teal-200/60',
+            iconBg: 'bg-teal-200/70',
+            numberColor: 'text-teal-600',
+            description: admin.studentsDesc,
+        },
+        {
+            href: '/admin/borrows',
+            label: admin.activeBorrows,
+            icon: '🔄',
+            cardBg: 'bg-gradient-to-br from-pink-50 to-pink-100/60 border-pink-200/60',
+            iconBg: 'bg-pink-200/70',
+            numberColor: 'text-pink-600',
+            description: admin.activeBorrowsDesc,
+        },
+    ] as const;
 
     return (
         <main className="min-h-screen">
             <PageHeader
                 emoji="👋"
-                title={`Welcome, ${user?.user_name ?? 'Librarian'}`}
-                subtitle="Here's what's happening in your library today"
+                title={`${admin.welcome}, ${user?.user_name ?? admin.librarian}`}
+                subtitle={admin.subtitle}
+                locale={locale}
                 action={
                     <form action="/api/logout" method="POST">
                         <Button type="submit" variant="outline" className="bg-white/70">
-                            Log Out
+                            {admin.logOut}
                         </Button>
                     </form>
                 }
@@ -134,12 +138,12 @@ export default async function AdminPage() {
 
                 <Card className="border-2 border-gray-100">
                     <Card.Header className="pb-2">
-                        <Card.Title className="text-xl">✨ Recent Activity</Card.Title>
+                        <Card.Title className="text-xl">✨ {admin.recentActivity}</Card.Title>
                     </Card.Header>
                     <Card.Content>
                         {recentBorrows.length === 0 ? (
                             <p className="text-gray-500 py-6 text-center">
-                                No borrow activity yet — it&apos;ll show up here once students start borrowing books.
+                                {admin.noActivity}
                             </p>
                         ) : (
                             <div className="flex flex-col gap-1">
@@ -153,12 +157,12 @@ export default async function AdminPage() {
                                             <div>
                                                 <p className="font-medium">{borrow.book_name}</p>
                                                 <p className="text-sm text-gray-500">
-                                                    borrowed by {borrow.student_name} · {new Date(borrow.date_borrow).toLocaleDateString()}
+                                                    {admin.borrowedBy} {borrow.student_name} · {new Date(borrow.date_borrow).toLocaleDateString()}
                                                 </p>
                                             </div>
                                         </div>
                                         <Chip size="sm" variant="soft" color={borrow.flag ? 'warning' : 'success'}>
-                                            {borrow.flag ? 'Active' : 'Returned'}
+                                            {borrow.flag ? admin.active : admin.returned}
                                         </Chip>
                                     </div>
                                 ))}

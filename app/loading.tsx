@@ -1,12 +1,17 @@
-export default function Loading() {
+import { getLocale, t } from '@/lib/i18n';
+
+export default async function Loading() {
+    const locale = await getLocale();
+    const { loading, loadingLetters } = t(locale);
+
     return (
         <div className="min-h-screen flex flex-col items-center justify-center gap-4">
             <div className="letter-loader">
-                <span>A</span>
-                <span>B</span>
-                <span>C</span>
+                {loadingLetters.map((letter) => (
+                    <span key={letter}>{letter}</span>
+                ))}
             </div>
-            {/*<p className="text-gray-500 text-lg">Loading books...</p>*/}
+            <p className="text-gray-500 text-lg">{loading}</p>
         </div>
     );
 }

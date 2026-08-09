@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { sql } from '@/lib/db';
 import { Card, Button, Chip } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
+import { getLocale, t } from '@/lib/i18n';
 
 interface Book {
     book_id: number;
@@ -19,21 +20,23 @@ async function getBooks(): Promise<Book[]> {
 }
 
 export default async function AdminBooksPage() {
-    const books = await getBooks();
+    const [books, locale] = await Promise.all([getBooks(), getLocale()]);
+    const { common, books: booksText } = t(locale);
 
     return (
         <main className="min-h-screen">
             <PageHeader
                 emoji="📚"
-                title="Manage Books"
-                subtitle="Add, edit, and browse the library catalog"
+                title={booksText.title}
+                subtitle={booksText.subtitle}
+                locale={locale}
                 action={
                     <div className="flex items-center gap-3">
                         <Link href="/admin">
-                            <Button variant="outline">Back to Home</Button>
+                            <Button variant="outline">{common.backToHome}</Button>
                         </Link>
                         <Link href="/admin/books/new">
-                            <Button>Add Book</Button>
+                            <Button>{booksText.addBook}</Button>
                         </Link>
                     </div>
                 }
@@ -43,7 +46,7 @@ export default async function AdminBooksPage() {
                 {books.length === 0 ? (
                     <Card className="border-2 border-gray-100">
                         <Card.Content>
-                            <p className="text-gray-500 py-6 text-center">No books yet.</p>
+                            <p className="text-gray-500 py-6 text-center">{booksText.noBooks}</p>
                         </Card.Content>
                     </Card>
                 ) : (
@@ -57,13 +60,13 @@ export default async function AdminBooksPage() {
                                     <div>
                                         <p className="text-xs text-gray-400">#{book.book_id}</p>
                                         <p className="font-semibold text-lg leading-snug">{book.book_name}</p>
-                                        <p className="text-sm text-gray-500">by {book.auther}</p>
+                                        <p className="text-sm text-gray-500">{common.by} {book.auther}</p>
                                     </div>
                                     {book.age_group && (
                                         <Chip size="sm" variant="soft">{book.age_group}</Chip>
                                     )}
                                     <Link href={`/admin/books/${book.book_id}/edit`} className="mt-auto">
-                                        <Button variant="outline" className="w-full">Edit</Button>
+                                        <Button variant="outline" className="w-full">{common.edit}</Button>
                                     </Link>
                                 </Card.Content>
                             </Card>
