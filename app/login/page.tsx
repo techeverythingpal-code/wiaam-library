@@ -4,7 +4,11 @@ import LoginForm from './login-form';
 
 export default async function LoginPage() {
     const locale = await getLocale();
-    const { login } = t(locale);
+    const { login, common } = t(locale);
 
-    return <LoginForm locale={locale} text={login} />;
+    return <LoginForm
+        locale={locale}
+        text={{ ...login, backToHome: common.backToHome }}
+
+    />;
 }

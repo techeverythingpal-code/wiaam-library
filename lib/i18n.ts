@@ -7,7 +7,7 @@ export const dict = {
         loading: 'Loading books...',
         loadingLetters: ['A', 'B', 'C'],
         common: {
-            backToHome: 'Back to Home',
+            backToHome: 'Back to Dashboard',
             edit: 'Edit',
             by: 'by',
             addBook: 'Add Book',
@@ -134,7 +134,7 @@ export const dict = {
         loading: 'جاري تحميل الكتب...',
         loadingLetters: ['أ', 'ب', 'ت'],
         common: {
-            backToHome: 'العودة للرئيسية',
+            backToHome: 'العودة للوحة التحكم',
             edit: 'تعديل',
             by: 'بواسطة',
             addBook: 'إضافة كتاب',

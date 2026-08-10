@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Card, Input, Label, Button } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
 import type { Locale } from '@/lib/i18n';
@@ -14,6 +15,7 @@ interface LoginText {
     loggingIn: string;
     logIn: string;
     loginFailed: string;
+    backToHome: string;
 }
 
 export default function LoginForm({ locale, text }: { locale: Locale; text: LoginText }) {
@@ -52,6 +54,11 @@ export default function LoginForm({ locale, text }: { locale: Locale; text: Logi
                 title={text.title}
                 subtitle={text.subtitle}
                 locale={locale}
+                action={
+                    <Link href="/">
+                        <Button variant="outline">{text.backToHome}</Button>
+                    </Link>
+                }
             />
 
             <div className="max-w-sm mx-auto px-6 py-16">
