@@ -7,6 +7,7 @@ interface PageHeaderProps {
     title: string;
     subtitle?: string;
     action?: ReactNode;
+    action2?: ReactNode;
     locale: Locale;
 }
 

@@ -60,6 +60,11 @@ export default function LoginForm({ locale, text }: { locale: Locale; text: Logi
                         <Button variant="outline">{text.backToHome}</Button>
                     </Link>
                 }
+                action2={
+                    <Link href="/">
+                        <Button variant="outline">{text.goHome}</Button>
+                    </Link>
+                }
             />
 
             <div className="max-w-sm mx-auto px-6 py-16">
