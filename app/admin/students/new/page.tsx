@@ -1,4 +1,5 @@
-import { getLocale, t } from '@/lib/i18n';
+import { getLocale } from '@/lib/i18n-server';
+import { t } from '@/lib/i18n';
 import NewStudentForm from './new-student-form';
 
 export default async function NewStudentPage() {

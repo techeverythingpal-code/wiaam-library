@@ -1,6 +1,7 @@
 import { sql } from '@/lib/db';
 import NewBorrowForm from './new-borrow-form';
-import { getLocale, t } from '@/lib/i18n';
+import { getLocale } from '@/lib/i18n-server';
+import { t } from '@/lib/i18n';
 
 interface Student {
     student_id: number;

@@ -1,4 +1,5 @@
-import { getLocale, t } from '@/lib/i18n';
+import { getLocale } from '@/lib/i18n-server';
+import { t } from '@/lib/i18n';
 import LoginForm from './login-form';
 
 export default async function LoginPage() {

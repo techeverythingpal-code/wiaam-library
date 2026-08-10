@@ -3,7 +3,8 @@ import { cookies } from 'next/headers';
 import { sql } from '@/lib/db';
 import { Card, Button, Chip } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
-import { getLocale, t } from '@/lib/i18n';
+import { getLocale } from '@/lib/i18n-server';
+import { t } from '@/lib/i18n';
 
 async function getUser(userId: string) {
     const rows = await sql`
