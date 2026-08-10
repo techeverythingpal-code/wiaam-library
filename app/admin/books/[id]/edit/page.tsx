@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { sql } from '@/lib/db';
 import EditBookForm from './edit-form';
+import { getLocale, t } from '@/lib/i18n';
 
 interface Book {
     book_id: number;
@@ -25,11 +26,13 @@ export default async function EditBookPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = await params;
-    const book = await getBook(id);
+    const [book, locale] = await Promise.all([getBook(id), getLocale()]);
 
     if (!book) {
         notFound();
     }
 
-    return <EditBookForm book={book} />;
+    const text = t(locale);
+
+    return <EditBookForm book={book} locale={locale} text={{ ...text.editBook, ...text.newBook }} />;
 }

@@ -1,5 +1,6 @@
 import { sql } from '@/lib/db';
 import NewBorrowForm from './new-borrow-form';
+import { getLocale, t } from '@/lib/i18n';
 
 interface Student {
     student_id: number;
@@ -32,10 +33,20 @@ async function getAvailableBooks(): Promise<Book[]> {
 }
 
 export default async function NewBorrowPage() {
-    const [students, books] = await Promise.all([
+    const [students, books, locale] = await Promise.all([
         getAvailableStudents(),
         getAvailableBooks(),
+        getLocale(),
     ]);
 
-    return <NewBorrowForm students={students} books={books} />;
+    const { newBorrow, editBook } = t(locale);
+
+    return (
+        <NewBorrowForm
+            students={students}
+            books={books}
+            locale={locale}
+            text={{ ...newBorrow, saving: editBook.saving }}
+        />
+    );
 }

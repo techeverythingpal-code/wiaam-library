@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, Input, Label, Button } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
+import type { Locale } from '@/lib/i18n';
 
 interface Book {
     book_id: number;
@@ -13,7 +14,21 @@ interface Book {
     book_cover: string | null;
 }
 
-export default function EditBookForm({ book }: { book: Book }) {
+interface EditBookText {
+    titlePrefix: string;
+    title: string;
+    deleteConfirm: (name: string) => string;
+    saving: string;
+    saveChanges: string;
+    delete: string;
+    failedToUpdate: string;
+    failedToDelete: string;
+    author: string;
+    ageGroup: string;
+    coverUrl: string;
+}
+
+export default function EditBookForm({ book, locale, text }: { book: Book; locale: Locale; text: EditBookText }) {
     const router = useRouter();
     const [bookName, setBookName] = useState(book.book_name);
     const [auther, setAuther] = useState(book.auther);
@@ -45,12 +60,12 @@ export default function EditBookForm({ book }: { book: Book }) {
             router.refresh();
         } else {
             const data = await res.json();
-            setError(data.error ?? 'Failed to update book');
+            setError(data.error ?? text.failedToUpdate);
         }
     }
 
     async function handleDelete() {
-        if (!confirm(`Delete "${book.book_name}"? This cannot be undone.`)) {
+        if (!confirm(text.deleteConfirm(book.book_name))) {
             return;
         }
 
@@ -65,7 +80,7 @@ export default function EditBookForm({ book }: { book: Book }) {
             router.refresh();
         } else {
             const data = await res.json();
-            setError(data.error ?? 'Failed to delete book');
+            setError(data.error ?? text.failedToDelete);
         }
     }
 
@@ -73,8 +88,9 @@ export default function EditBookForm({ book }: { book: Book }) {
         <main className="min-h-screen">
             <PageHeader
                 emoji="📚"
-                title={`Edit Book #${book.book_id}`}
+                title={`${text.titlePrefix}${book.book_id}`}
                 subtitle={book.book_name}
+                locale={locale}
             />
 
             <div className="max-w-md mx-auto px-6 py-10">
@@ -82,7 +98,7 @@ export default function EditBookForm({ book }: { book: Book }) {
                     <Card.Content>
                         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                             <div className="flex flex-col gap-1">
-                                <Label htmlFor="bookName">Title</Label>
+                                <Label htmlFor="bookName">{text.title}</Label>
                                 <Input
                                     id="bookName"
                                     type="text"
@@ -92,7 +108,7 @@ export default function EditBookForm({ book }: { book: Book }) {
                                 />
                             </div>
                             <div className="flex flex-col gap-1">
-                                <Label htmlFor="auther">Author</Label>
+                                <Label htmlFor="auther">{text.author}</Label>
                                 <Input
                                     id="auther"
                                     type="text"
@@ -102,7 +118,7 @@ export default function EditBookForm({ book }: { book: Book }) {
                                 />
                             </div>
                             <div className="flex flex-col gap-1">
-                                <Label htmlFor="ageGroup">Age Group (optional)</Label>
+                                <Label htmlFor="ageGroup">{text.ageGroup}</Label>
                                 <Input
                                     id="ageGroup"
                                     type="text"
@@ -111,7 +127,7 @@ export default function EditBookForm({ book }: { book: Book }) {
                                 />
                             </div>
                             <div className="flex flex-col gap-1">
-                                <Label htmlFor="bookCover">Cover Image URL (optional)</Label>
+                                <Label htmlFor="bookCover">{text.coverUrl}</Label>
                                 <Input
                                     id="bookCover"
                                     type="text"
@@ -122,7 +138,7 @@ export default function EditBookForm({ book }: { book: Book }) {
                             {error && <p className="text-red-500 text-sm">{error}</p>}
                             <div className="flex gap-2">
                                 <Button type="submit" isDisabled={loading}>
-                                    {loading ? 'Saving...' : 'Save Changes'}
+                                    {loading ? text.saving : text.saveChanges}
                                 </Button>
                                 <Button
                                     type="button"
@@ -130,7 +146,7 @@ export default function EditBookForm({ book }: { book: Book }) {
                                     isDisabled={loading}
                                     onClick={handleDelete}
                                 >
-                                    Delete
+                                    {text.delete}
                                 </Button>
                             </div>
                         </form>

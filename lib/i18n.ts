@@ -22,7 +22,7 @@ export const dict = {
             by: 'by',
         },
 
-         login: {
+        login: {
             title: 'تسجيل الدخول',
             subtitle: 'Log in to manage the library',
             username: 'Username',
@@ -31,7 +31,7 @@ export const dict = {
             logIn: 'Log In',
             loginFailed: 'Login failed',
         },
-         common: {
+        common: {
             backToHome: 'Back to Home',
             edit: 'Edit',
             by: 'by',
@@ -54,7 +54,7 @@ export const dict = {
             addBook: 'Add Book',
             failedToAdd: 'Failed to add book',
         },
-         newStudent: {
+        newStudent: {
             title: 'Add Student',
             subtitle: 'Register a new student',
             studentId: 'Student ID',
@@ -78,6 +78,61 @@ export const dict = {
             saving: 'Saving...',
             markReturned: 'Mark Returned',
         },
+        students: {
+            title: 'Manage Students',
+            subtitle: "Keep track of your library's young readers",
+            backToHome: 'Back to Home',
+            addStudent: 'Add Student',
+            cardsView: 'Cards',
+            detailedList: 'Detailed List',
+            noStudents: 'No students yet.',
+            grade: 'Grade',
+            noGrade: 'No grade',
+            activeBorrow: 'active borrow',
+            activeBorrows: 'active borrows',
+            edit: 'Edit',
+            id: 'ID',
+            name: 'Name',
+            phone: 'Phone',
+            activeBorrowsCol: 'Active Borrows',
+            history: 'History',
+            noHistory: 'No history',
+            hide: 'Hide',
+            show: 'Show',
+            borrowed: 'borrowed',
+            returnedOn: 'returned',
+            active: 'Active',
+            returned: 'Returned',
+        },
+        editBook: {
+            titlePrefix: 'Edit Book #',
+            title: 'Title',
+            deleteConfirm: (name: string) => `Delete "${name}"? This cannot be undone.`,
+            saving: 'Saving...',
+            saveChanges: 'Save Changes',
+            delete: 'Delete',
+            failedToUpdate: 'Failed to update book',
+            failedToDelete: 'Failed to delete book',
+        },
+        editStudent: {
+            titlePrefix: 'Edit Student #',
+            deleteConfirm: (name: string) => `Delete "${name}"? This cannot be undone.`,
+            failedToUpdate: 'Failed to update student',
+            failedToDelete: 'Failed to delete student',
+        },
+
+        newBorrow: {
+            title: 'New Borrow',
+            subtitle: 'Check out a book to a student',
+            noBooksAvailable: 'No books are currently available to borrow.',
+            noStudents: 'No students found — add a student first.',
+            borrowId: 'Borrow ID',
+            book: 'Book',
+            student: 'Student',
+            selectBoth: 'Please select a book and a student',
+            checkOutBook: 'Check Out Book',
+            failedToCreate: 'Failed to create borrow',
+        },
 
 
 
@@ -93,7 +148,7 @@ export const dict = {
             by: 'بواسطة',
         },
 
-         login: {
+        login: {
             title: 'تسجيل الدخول',
             subtitle: 'سجّل الدخول لإدارة المكتبة',
             username: 'اسم المستخدم',
@@ -102,7 +157,7 @@ export const dict = {
             logIn: 'تسجيل الدخول',
             loginFailed: 'فشل تسجيل الدخول',
         },
-          common: {
+        common: {
             backToHome: 'العودة للرئيسية',
             edit: 'تعديل',
             by: 'بواسطة',
@@ -113,7 +168,7 @@ export const dict = {
             addBook: 'إضافة كتاب',
             noBooks: 'لا توجد كتب بعد.',
         },
-         newBook: {
+        newBook: {
             title: 'إضافة كتاب',
             subtitle: 'أضف عنواناً جديداً إلى الفهرس',
             bookId: 'رقم الكتاب',
@@ -125,7 +180,7 @@ export const dict = {
             addBook: 'إضافة كتاب',
             failedToAdd: 'فشل في إضافة الكتاب',
         },
-         newStudent: {
+        newStudent: {
             title: 'إضافة طالب',
             subtitle: 'سجّل طالباً جديداً',
             studentId: 'رقم الطالب',
@@ -149,7 +204,60 @@ export const dict = {
             saving: 'جارٍ الحفظ...',
             markReturned: 'تسجيل الإرجاع',
         },
-
+        students: {
+            title: 'إدارة الطلاب',
+            subtitle: 'تابع القراء الصغار في مكتبتك',
+            backToHome: 'العودة للرئيسية',
+            addStudent: 'إضافة طالب',
+            cardsView: 'بطاقات',
+            detailedList: 'قائمة تفصيلية',
+            noStudents: 'لا يوجد طلاب بعد.',
+            grade: 'الصف',
+            noGrade: 'بدون صف',
+            activeBorrow: 'استعارة نشطة',
+            activeBorrows: 'استعارة نشطة',
+            edit: 'تعديل',
+            id: 'الرقم',
+            name: 'الاسم',
+            phone: 'الهاتف',
+            activeBorrowsCol: 'الاستعارات النشطة',
+            history: 'السجل',
+            noHistory: 'لا يوجد سجل',
+            hide: 'إخفاء',
+            show: 'عرض',
+            borrowed: 'استُعير',
+            returnedOn: 'أُعيد',
+            active: 'نشطة',
+            returned: 'تم إرجاعها',
+        },
+        editBook: {
+            titlePrefix: 'تعديل الكتاب رقم ',
+            title: 'العنوان',
+            deleteConfirm: (name: string) => `هل تريد حذف "${name}"؟ لا يمكن التراجع عن هذا الإجراء.`,
+            saving: 'جارٍ الحفظ...',
+            saveChanges: 'حفظ التغييرات',
+            delete: 'حذف',
+            failedToUpdate: 'فشل في تحديث الكتاب',
+            failedToDelete: 'فشل في حذف الكتاب',
+        },
+        editStudent: {
+            titlePrefix: 'تعديل الطالب رقم ',
+            deleteConfirm: (name: string) => `هل تريد حذف "${name}"؟ لا يمكن التراجع عن هذا الإجراء.`,
+            failedToUpdate: 'فشل في تحديث الطالب',
+            failedToDelete: 'فشل في حذف الطالب',
+        },
+        newBorrow: {
+            title: 'استعارة جديدة',
+            subtitle: 'أعِر كتاباً لطالب',
+            noBooksAvailable: 'لا توجد كتب متاحة للاستعارة حالياً.',
+            noStudents: 'لا يوجد طلاب — أضف طالباً أولاً.',
+            borrowId: 'رقم الاستعارة',
+            book: 'الكتاب',
+            student: 'الطالب',
+            selectBoth: 'يرجى اختيار كتاب وطالب',
+            checkOutBook: 'تسجيل الاستعارة',
+            failedToCreate: 'فشل في إنشاء الاستعارة',
+        },
 
     },
 } as const;

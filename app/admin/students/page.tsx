@@ -1,5 +1,6 @@
 import { sql } from '@/lib/db';
 import StudentsView from './students-view';
+import { getLocale, t } from '@/lib/i18n';
 
 export interface StudentBorrow {
     borrow_id: number;
@@ -75,6 +76,8 @@ async function getStudentsWithBorrows(): Promise<StudentWithBorrows[]> {
 }
 
 export default async function StudentsPage() {
-    const students = await getStudentsWithBorrows();
-    return <StudentsView students={students} />;
+    const [students, locale] = await Promise.all([getStudentsWithBorrows(), getLocale()]);
+    const { students: text } = t(locale);
+
+    return <StudentsView students={students} locale={locale} text={text} />;
 }

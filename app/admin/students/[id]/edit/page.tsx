@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { sql } from '@/lib/db';
 import EditStudentForm from './edit-form';
+import { getLocale, t } from '@/lib/i18n';
 
 interface Student {
     student_id: number;
@@ -24,11 +25,19 @@ export default async function EditStudentPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = await params;
-    const student = await getStudent(id);
+    const [student, locale] = await Promise.all([getStudent(id), getLocale()]);
 
     if (!student) {
         notFound();
     }
 
-    return <EditStudentForm student={student} />;
+    const text = t(locale);
+
+    return (
+        <EditStudentForm
+            student={student}
+            locale={locale}
+            text={{ ...text.editStudent, ...text.editBook, ...text.newStudent }}
+        />
+    );
 }
