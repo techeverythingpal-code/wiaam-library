@@ -39,14 +39,14 @@ export default async function NewBorrowPage() {
         getLocale(),
     ]);
 
-    const { newBorrow, editBook } = t(locale);
+    const { newBorrow, common } = t(locale);
 
     return (
         <NewBorrowForm
             students={students}
             books={books}
             locale={locale}
-            text={{ ...newBorrow, saving: editBook.saving }}
+            text={{ ...newBorrow, saving: common.saving }}
         />
     );
 }

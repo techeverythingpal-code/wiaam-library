@@ -3,7 +3,7 @@ import NewBookForm from './new-book-form';
 
 export default async function NewBookPage() {
     const locale = await getLocale();
-    const { newBook } = t(locale);
+    const { newBook, common } = t(locale);
 
-    return <NewBookForm locale={locale} text={newBook} />;
+    return <NewBookForm locale={locale} text={{ ...newBook, addBook: common.addBook }} />;
 }

@@ -36,7 +36,7 @@ export default async function AdminBooksPage() {
                             <Button variant="outline">{common.backToHome}</Button>
                         </Link>
                         <Link href="/admin/books/new">
-                            <Button>{booksText.addBook}</Button>
+                            <Button>{common.addBook}</Button>
                         </Link>
                     </div>
                 }

@@ -65,7 +65,7 @@ export default async function AdminPage() {
         getLocale(),
     ]);
 
-    const { admin } = t(locale);
+    const { admin, common } = t(locale);
     const statValues = [stats.bookCount, stats.studentCount, stats.activeBorrowCount];
 
     const statCards = [
@@ -162,7 +162,7 @@ export default async function AdminPage() {
                                             </div>
                                         </div>
                                         <Chip size="sm" variant="soft" color={borrow.flag ? 'warning' : 'success'}>
-                                            {borrow.flag ? admin.active : admin.returned}
+                                            {borrow.flag ? common.active : common.returned}
                                         </Chip>
                                     </div>
                                 ))}

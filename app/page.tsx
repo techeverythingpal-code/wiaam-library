@@ -38,7 +38,7 @@ export default async function Home({
   const { q } = await searchParams;
   const query = q ?? '';
   const [books, locale] = await Promise.all([getBooks(query), getLocale()]);
-  const { home } = t(locale);
+  const { home, common } = t(locale);
 
   return (
     <main className="min-h-screen">
@@ -82,7 +82,7 @@ export default async function Home({
                 )}
                 <Card.Header>
                   <Card.Title>{book.book_name}</Card.Title>
-                  <Card.Description>{home.by} {book.auther}</Card.Description>
+                  <Card.Description>{common.by} {book.auther}</Card.Description>
                 </Card.Header>
                 <Card.Content>
                   {book.age_group && (

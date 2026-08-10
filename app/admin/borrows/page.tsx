@@ -32,7 +32,7 @@ async function getBorrows(): Promise<Borrow[]> {
 
 export default async function BorrowsPage() {
     const [borrows, locale] = await Promise.all([getBorrows(), getLocale()]);
-    const { borrows: text } = t(locale);
+    const fullText = t(locale); const text = { ...fullText.borrows, ...fullText.common };
 
     return (
         <main className="min-h-screen">

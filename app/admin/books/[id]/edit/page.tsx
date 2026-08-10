@@ -34,5 +34,5 @@ export default async function EditBookPage({
 
     const text = t(locale);
 
-    return <EditBookForm book={book} locale={locale} text={{ ...text.editBook, ...text.newBook }} />;
+    return <EditBookForm book={book} locale={locale} text={{ ...text.editBook, ...text.newBook, saving: text.common.saving }} />;
 }

@@ -37,7 +37,7 @@ export default async function EditStudentPage({
         <EditStudentForm
             student={student}
             locale={locale}
-            text={{ ...text.editStudent, ...text.editBook, ...text.newStudent }}
+            text={{ ...text.editStudent, ...text.editBook, ...text.newStudent, saving: text.common.saving }}
         />
     );
 }

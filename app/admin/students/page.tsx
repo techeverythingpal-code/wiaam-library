@@ -77,7 +77,7 @@ async function getStudentsWithBorrows(): Promise<StudentWithBorrows[]> {
 
 export default async function StudentsPage() {
     const [students, locale] = await Promise.all([getStudentsWithBorrows(), getLocale()]);
-    const { students: text } = t(locale);
+    const fullText = t(locale); const text = { ...fullText.students, ...fullText.common };
 
     return <StudentsView students={students} locale={locale} text={text} />;
 }
