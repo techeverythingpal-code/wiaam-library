@@ -7,7 +7,7 @@ interface PageHeaderProps {
     title: string;
     subtitle?: string;
     action?: ReactNode;
-    action2?: ReactNode;
+
     locale: Locale;
 }
 
@@ -25,6 +25,7 @@ export default function PageHeader({ emoji, title, subtitle, action, locale }: P
                 </div>
                 <div className="flex items-center gap-3">
                     {action}
+
                     <LanguageToggle locale={locale} />
                 </div>
             </div>
