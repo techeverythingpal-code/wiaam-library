@@ -8,6 +8,7 @@ export const dict = {
         loadingLetters: ['A', 'B', 'C'],
         common: {
             backToHome: 'Back to Dashboard',
+            goHome: 'Back to Home',
             edit: 'Edit',
             by: 'by',
             addBook: 'Add Book',
@@ -135,6 +136,7 @@ export const dict = {
         loadingLetters: ['أ', 'ب', 'ت'],
         common: {
             backToHome: 'العودة للوحة التحكم',
+            goHome: 'العودة للصفحة الرئيسية',
             edit: 'تعديل',
             by: 'بواسطة',
             addBook: 'إضافة كتاب',

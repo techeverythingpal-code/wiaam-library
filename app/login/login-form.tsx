@@ -16,6 +16,7 @@ interface LoginText {
     logIn: string;
     loginFailed: string;
     backToHome: string;
+    goHome: string;
 }
 
 export default function LoginForm({ locale, text }: { locale: Locale; text: LoginText }) {

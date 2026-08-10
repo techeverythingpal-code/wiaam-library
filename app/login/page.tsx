@@ -8,7 +8,7 @@ export default async function LoginPage() {
 
     return <LoginForm
         locale={locale}
-        text={{ ...login, backToHome: common.backToHome }}
+        text={{ ...login, goHome: common.goHome }}
 
     />;
 }
