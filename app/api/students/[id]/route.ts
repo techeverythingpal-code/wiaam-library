@@ -26,15 +26,23 @@ export async function PUT(
         );
     }
 
-    await sql`
-    UPDATE student
-    SET student_name = ${studentName},
-        grade = ${grade},
-        phone = ${phone}
-    WHERE student_id = ${id}
-  `;
+    try {
+        await sql`
+      UPDATE student
+      SET student_name = ${studentName},
+          grade = ${grade},
+          phone = ${phone}
+      WHERE student_id = ${id}
+    `;
 
-    return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true });
+    } catch (err) {
+        console.error('Failed to update student:', err);
+        return NextResponse.json(
+            { error: err instanceof Error ? err.message : 'Failed to update student' },
+            { status: 500 }
+        );
+    }
 }
 
 export async function DELETE(
@@ -48,18 +56,26 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const activeBorrow = await sql`
-    SELECT borrow_id FROM borrow WHERE student_id = ${id} AND flag = true
-  `;
+    try {
+        const activeBorrow = await sql`
+      SELECT borrow_id FROM borrow WHERE student_id = ${id} AND flag = true
+    `;
 
-    if (activeBorrow.length > 0) {
+        if (activeBorrow.length > 0) {
+            return NextResponse.json(
+                { error: 'Cannot delete a student who currently has a book borrowed' },
+                { status: 409 }
+            );
+        }
+
+        await sql`DELETE FROM student WHERE student_id = ${id}`;
+
+        return NextResponse.json({ success: true });
+    } catch (err) {
+        console.error('Failed to delete student:', err);
         return NextResponse.json(
-            { error: 'Cannot delete a student who currently has a book borrowed' },
-            { status: 409 }
+            { error: err instanceof Error ? err.message : 'Failed to delete student' },
+            { status: 500 }
         );
     }
-
-    await sql`DELETE FROM student WHERE student_id = ${id}`;
-
-    return NextResponse.json({ success: true });
 }

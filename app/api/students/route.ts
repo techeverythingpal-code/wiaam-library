@@ -19,21 +19,29 @@ export async function POST(request: Request) {
         );
     }
 
-    const existing = await sql`
-    SELECT student_id FROM student WHERE student_id = ${studentId}
-  `;
+    try {
+        const existing = await sql`
+      SELECT student_id FROM student WHERE student_id = ${studentId}
+    `;
 
-    if (existing.length > 0) {
+        if (existing.length > 0) {
+            return NextResponse.json(
+                { error: `Student ID ${studentId} already exists` },
+                { status: 409 }
+            );
+        }
+
+        await sql`
+      INSERT INTO student (student_id, student_name, grade, phone)
+      VALUES (${studentId}, ${studentName}, ${grade}, ${phone})
+    `;
+
+        return NextResponse.json({ success: true });
+    } catch (err) {
+        console.error('Failed to add student:', err);
         return NextResponse.json(
-            { error: `Student ID ${studentId} already exists` },
-            { status: 409 }
+            { error: err instanceof Error ? err.message : 'Failed to add student' },
+            { status: 500 }
         );
     }
-
-    await sql`
-    INSERT INTO student (student_id, student_name, grade, phone)
-    VALUES (${studentId}, ${studentName}, ${grade}, ${phone})
-  `;
-
-    return NextResponse.json({ success: true });
 }

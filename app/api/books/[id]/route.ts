@@ -26,16 +26,24 @@ export async function PUT(
         );
     }
 
-    await sql`
-    UPDATE book
-    SET book_name = ${bookName},
-        auther = ${auther},
-        age_group = ${ageGroup},
-        book_cover = ${bookCover}
-    WHERE book_id = ${id}
-  `;
+    try {
+        await sql`
+      UPDATE book
+      SET book_name = ${bookName},
+          auther = ${auther},
+          age_group = ${ageGroup},
+          book_cover = ${bookCover}
+      WHERE book_id = ${id}
+    `;
 
-    return NextResponse.json({ success: true });
+        return NextResponse.json({ success: true });
+    } catch (err) {
+        console.error('Failed to update book:', err);
+        return NextResponse.json(
+            { error: err instanceof Error ? err.message : 'Failed to update book' },
+            { status: 500 }
+        );
+    }
 }
 
 export async function DELETE(
@@ -49,18 +57,26 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const activeBorrow = await sql`
-    SELECT borrow_id FROM borrow WHERE book_id = ${id} AND flag = true
-  `;
+    try {
+        const activeBorrow = await sql`
+      SELECT borrow_id FROM borrow WHERE book_id = ${id} AND flag = true
+    `;
 
-    if (activeBorrow.length > 0) {
+        if (activeBorrow.length > 0) {
+            return NextResponse.json(
+                { error: 'Cannot delete a book that is currently borrowed' },
+                { status: 409 }
+            );
+        }
+
+        await sql`DELETE FROM book WHERE book_id = ${id}`;
+
+        return NextResponse.json({ success: true });
+    } catch (err) {
+        console.error('Failed to delete book:', err);
         return NextResponse.json(
-            { error: 'Cannot delete a book that is currently borrowed' },
-            { status: 409 }
+            { error: err instanceof Error ? err.message : 'Failed to delete book' },
+            { status: 500 }
         );
     }
-
-    await sql`DELETE FROM book WHERE book_id = ${id}`;
-
-    return NextResponse.json({ success: true });
 }
