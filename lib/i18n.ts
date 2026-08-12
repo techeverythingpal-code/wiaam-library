@@ -16,6 +16,7 @@ export const dict = {
             saving: 'Saving...',
             active: 'Active',
             returned: 'Returned',
+            cancel: 'Cancel',
         },
         home: {
             subtitle: 'Browse and discover books for kids',
@@ -144,6 +145,7 @@ export const dict = {
             saving: 'جارٍ الحفظ...',
             active: 'نشطة',
             returned: 'تم إرجاعها',
+            cancel: 'إلغاء',
         },
         home: {
             subtitle: 'تصفح واكتشف كتب الأطفال',
