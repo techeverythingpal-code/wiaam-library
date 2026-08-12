@@ -106,7 +106,7 @@ export const dict = {
         editBook: {
             titlePrefix: 'Edit Book #',
             title: 'Title',
-            deleteConfirm: (name: string) => `Delete "${name}"? This cannot be undone.`,
+            deleteConfirm: 'Delete "{name}"? This cannot be undone.',
             saveChanges: 'Save Changes',
             delete: 'Delete',
             failedToUpdate: 'Failed to update book',
@@ -114,7 +114,7 @@ export const dict = {
         },
         editStudent: {
             titlePrefix: 'Edit Student #',
-            deleteConfirm: (name: string) => `Delete "${name}"? This cannot be undone.`,
+            deleteConfirm: 'Delete "{name}"? This cannot be undone.',
             failedToUpdate: 'Failed to update student',
             failedToDelete: 'Failed to delete student',
         },
@@ -234,7 +234,7 @@ export const dict = {
         editBook: {
             titlePrefix: 'تعديل الكتاب رقم ',
             title: 'العنوان',
-            deleteConfirm: (name: string) => `هل تريد حذف "${name}"؟ لا يمكن التراجع عن هذا الإجراء.`,
+            deleteConfirm: 'هل تريد حذف  "{name}"? لا يمكن التراجع عن هذا الإجراء.',
             saveChanges: 'حفظ التغييرات',
             delete: 'حذف',
             failedToUpdate: 'فشل في تحديث الكتاب',
@@ -242,7 +242,7 @@ export const dict = {
         },
         editStudent: {
             titlePrefix: 'تعديل الطالب رقم ',
-            deleteConfirm: (name: string) => `هل تريد حذف "${name}"؟ لا يمكن التراجع عن هذا الإجراء.`,
+            deleteConfirm: 'هل تريد حذف  "{name}"? لا يمكن التراجع عن هذا الإجراء.',
             failedToUpdate: 'فشل في تحديث الطالب',
             failedToDelete: 'فشل في حذف الطالب',
         },
