@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import { sql } from '@/lib/db';
+import { SESSION_COOKIE, SESSION_MAX_AGE, createSessionToken } from '@/lib/session';
 
 export async function POST(request: Request) {
   const { userName, password } = await request.json();
@@ -42,13 +43,15 @@ export async function POST(request: Request) {
     );
   }
 
+  const token = await createSessionToken(user.user_id);
+
   const cookieStore = await cookies();
-  cookieStore.set('session_user', String(user.user_id), {
+  cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: SESSION_MAX_AGE,
   });
 
   return NextResponse.json({ success: true, role: user.role });
