@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { sql } from '@/lib/db';
 import { Card, Button, Chip } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
+import ImportExcel from '@/components/ImportExcel';
 import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
 
@@ -36,6 +37,7 @@ export default async function AdminBooksPage() {
                         <Link href="/admin">
                             <Button variant="outline">{common.backToHome}</Button>
                         </Link>
+                        <ImportExcel kind="books" locale={locale} />
                         <Link href="/admin/books/new">
                             <Button>{common.addBook}</Button>
                         </Link>
