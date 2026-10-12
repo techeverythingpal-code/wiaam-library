@@ -82,6 +82,7 @@ export const dict = {
             borrowed: 'borrowed',
             returnedOn: 'returned',
             markReturned: 'Mark Returned',
+            failedToReturn: 'Failed to mark as returned',
         },
         students: {
             title: 'Manage Students',
@@ -213,6 +214,7 @@ export const dict = {
             borrowed: 'استُعير في',
             returnedOn: 'أُعيد في',
             markReturned: 'تسجيل الإرجاع',
+            failedToReturn: 'فشل في تسجيل الإرجاع',
         },
         students: {
             title: 'إدارة الطلاب',
