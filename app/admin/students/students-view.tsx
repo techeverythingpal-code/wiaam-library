@@ -4,6 +4,7 @@ import { useState, Fragment } from 'react';
 import Link from 'next/link';
 import { Card, Button, Chip } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
+import ImportExcel from '@/components/ImportExcel';
 import type { StudentWithBorrows } from './page';
 import type { Locale } from '@/lib/i18n';
 import { formatDate } from '@/lib/format';
@@ -73,9 +74,11 @@ export default function StudentsView({
                         <Link href="/admin">
                             <Button variant="outline">{text.backToHome}</Button>
                         </Link>
+                        <ImportExcel kind="students" locale={locale} />
                         <Link href="/admin/students/new">
                             <Button>{text.addStudent}</Button>
                         </Link>
+                        
                     </div>
                 }
             />
