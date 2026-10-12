@@ -38,7 +38,13 @@ export default async function EditStudentPage({
         <EditStudentForm
             student={student}
             locale={locale}
-            text={{ ...text.editStudent, ...text.editBook, ...text.newStudent, saving: text.common.saving }}
+            text={{
+                ...text.newStudent,
+                ...text.editStudent,
+                saveChanges: text.editBook.saveChanges,
+                delete: text.editBook.delete,
+                saving: text.common.saving,
+            }}
         />
     );
 }
