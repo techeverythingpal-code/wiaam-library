@@ -18,6 +18,35 @@ export const dict = {
             returned: 'Returned',
             cancel: 'Cancel',
         },
+
+                importExcel: {
+            button: 'Import from Excel',
+            importing: 'Importing...',
+            template: 'Download template',
+            resultTitle: 'Import result',
+            imported: 'imported',
+            skipped: 'skipped',
+            row: 'Row',
+            id: 'ID',
+            reason: 'Reason',
+            close: 'Close',
+            reasons: {
+                exists: 'ID already exists',
+                duplicateInFile: 'Duplicate ID in the file',
+                invalidId: 'Invalid ID',
+                missingRequired: 'Missing required fields',
+            },
+            errors: {
+                noFile: 'Please choose a file',
+                badFile: 'Could not read the file. Use an Excel .xlsx file.',
+                tooLarge: 'File is too large (max 5 MB)',
+                tooManyRows: 'Too many rows (max 2000)',
+                missingColumns: 'Missing required columns:',
+                empty: 'No data rows found in the file',
+                failed: 'Import failed',
+            },
+        },
+
         home: {
             subtitle: 'Browse and discover books for kids',
             adminLogin: 'Admin Login',
@@ -25,7 +54,7 @@ export const dict = {
             noBooks: 'No books found.',
         },
         login: {
-            title: 'تسجيل الدخول',
+            title: 'Admin Login',
             subtitle: 'Log in to manage the library',
             username: 'Username',
             password: 'Password',
@@ -150,6 +179,36 @@ export const dict = {
             returned: 'تم إرجاعها',
             cancel: 'إلغاء',
         },
+
+                importExcel: {
+            button: 'استيراد من Excel',
+            importing: 'جارٍ الاستيراد...',
+            template: 'تنزيل القالب',
+            resultTitle: 'نتيجة الاستيراد',
+            imported: 'تم استيراده',
+            skipped: 'تم تخطيه',
+            row: 'الصف',
+            id: 'الرقم',
+            reason: 'السبب',
+            close: 'إغلاق',
+            reasons: {
+                exists: 'الرقم موجود مسبقاً',
+                duplicateInFile: 'الرقم مكرر في الملف',
+                invalidId: 'رقم غير صالح',
+                missingRequired: 'حقول مطلوبة ناقصة',
+            },
+            errors: {
+                noFile: 'يرجى اختيار ملف',
+                badFile: 'تعذّر قراءة الملف. استخدم ملف Excel بصيغة xlsx.',
+                tooLarge: 'الملف كبير جداً (الحد الأقصى 5 ميغابايت)',
+                tooManyRows: 'عدد الصفوف كبير جداً (الحد الأقصى 2000)',
+                missingColumns: 'أعمدة مطلوبة مفقودة:',
+                empty: 'لا توجد صفوف بيانات في الملف',
+                failed: 'فشل الاستيراد',
+            },
+        },
+
+
         home: {
             subtitle: 'تصفح واكتشف كتب الأطفال',
             adminLogin: 'تسجيل دخول المشرف',
