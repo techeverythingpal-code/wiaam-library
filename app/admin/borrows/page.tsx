@@ -87,7 +87,11 @@ export default async function BorrowsPage() {
                                         {borrow.flag && (
                                             <ReturnButton
                                                 borrowId={borrow.borrow_id}
-                                                text={{ saving: text.saving, markReturned: text.markReturned }}
+                                                text={{
+                                                    saving: text.saving,
+                                                    markReturned: text.markReturned,
+                                                    failedToReturn: text.failedToReturn,
+                                                }}
                                             />
                                         )}
                                     </div>
