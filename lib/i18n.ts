@@ -116,6 +116,8 @@ export const dict = {
         editStudent: {
             titlePrefix: 'Edit Student #',
             deleteConfirm: 'Delete "{name}"? This cannot be undone.',
+            saveChanges: 'Save Changes',
+            delete: 'Delete',
             failedToUpdate: 'Failed to update student',
             failedToDelete: 'Failed to delete student',
         },
@@ -245,6 +247,8 @@ export const dict = {
         editStudent: {
             titlePrefix: 'تعديل الطالب رقم ',
             deleteConfirm: 'هل تريد حذف  "{name}"? لا يمكن التراجع عن هذا الإجراء.',
+            saveChanges: 'حفظ التغييرات',
+            delete: 'حذف',
             failedToUpdate: 'فشل في تحديث الطالب',
             failedToDelete: 'فشل في حذف الطالب',
         },
