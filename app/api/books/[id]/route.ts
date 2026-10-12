@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { sql } from '@/lib/db';
+import { SESSION_COOKIE, verifySession } from '@/lib/session';
 
 async function checkAuth() {
     const cookieStore = await cookies();
-    return cookieStore.get('session_user')?.value;
+    return await verifySession(cookieStore.get(SESSION_COOKIE)?.value);
 }
 
 export async function PUT(
