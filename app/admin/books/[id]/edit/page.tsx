@@ -43,6 +43,7 @@ export default async function EditBookPage({
                 ...text.newBook,
                 ...text.editBook,
                 saving: text.common.saving,
+                cancel: text.common.cancel,
             }}
         />
     );

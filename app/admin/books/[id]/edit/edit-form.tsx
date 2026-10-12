@@ -20,6 +20,7 @@ interface EditBookText {
     deleteConfirm: string;
     saving: string;
     saveChanges: string;
+    cancel: string;
     delete: string;
     failedToUpdate: string;
     failedToDelete: string;
@@ -139,6 +140,14 @@ export default function EditBookForm({ book, locale, text }: { book: Book; local
                             <div className="flex gap-2">
                                 <Button type="submit" isDisabled={loading}>
                                     {loading ? text.saving : text.saveChanges}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    isDisabled={loading}
+                                    onClick={() => router.push('/admin/books')}
+                                >
+                                    {text.cancel}
                                 </Button>
                                 <Button
                                     type="button"
