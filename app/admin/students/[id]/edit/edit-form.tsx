@@ -15,7 +15,7 @@ interface Student {
 
 interface EditStudentText {
     titlePrefix: string;
-    deleteConfirm: (name: string) => string;
+    deleteConfirm: string;
     failedToUpdate: string;
     failedToDelete: string;
     saving: string;
@@ -61,7 +61,7 @@ export default function EditStudentForm({ student, locale, text }: { student: St
     }
 
     async function handleDelete() {
-        if (!confirm(text.deleteConfirm(student.student_name))) {
+        if (!confirm(text.deleteConfirm.replace('{name}', student.student_name))) {
             return;
         }
 

@@ -17,7 +17,7 @@ interface Book {
 interface EditBookText {
     titlePrefix: string;
     title: string;
-    deleteConfirm: (name: string) => string;
+    deleteConfirm: string;
     saving: string;
     saveChanges: string;
     delete: string;
@@ -65,7 +65,7 @@ export default function EditBookForm({ book, locale, text }: { book: Book; local
     }
 
     async function handleDelete() {
-        if (!confirm(text.deleteConfirm(book.book_name))) {
+        if (!confirm(text.deleteConfirm.replace('{name}', book.book_name))) {
             return;
         }
 
