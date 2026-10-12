@@ -15,7 +15,6 @@ interface LoginText {
     loggingIn: string;
     logIn: string;
     loginFailed: string;
-    backToHome: string;
     goHome: string;
 }
 
