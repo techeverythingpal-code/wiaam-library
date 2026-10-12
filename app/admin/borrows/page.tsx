@@ -5,6 +5,7 @@ import PageHeader from '@/components/PageHeader';
 import ReturnButton from './return-button';
 import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
+import { formatDate } from '@/lib/format';
 interface Borrow {
     borrow_id: number;
     date_borrow: string;
@@ -73,9 +74,9 @@ export default async function BorrowsPage() {
                                         </p>
                                         <p className="text-sm text-gray-500">
                                             {borrow.student_name} · {text.borrowed}{' '}
-                                            {new Date(borrow.date_borrow).toLocaleDateString()}
+                                            {formatDate(borrow.date_borrow, locale)}
                                             {borrow.date_back
-                                                ? ` · ${text.returnedOn} ${new Date(borrow.date_back).toLocaleDateString()}`
+                                                ? ` · ${text.returnedOn} ${formatDate(borrow.date_back, locale)}`
                                                 : ''}
                                         </p>
                                     </div>
