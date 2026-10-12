@@ -6,6 +6,7 @@ import PageHeader from '@/components/PageHeader';
 import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
 import { SESSION_COOKIE, verifySession } from '@/lib/session';
+import { formatDate } from '@/lib/format';
 
 async function getUser(userId: string) {
     const rows = await sql`
@@ -159,7 +160,7 @@ export default async function AdminPage() {
                                             <div>
                                                 <p className="font-medium">{borrow.book_name}</p>
                                                 <p className="text-sm text-gray-500">
-                                                    {admin.borrowedBy} {borrow.student_name} · {new Date(borrow.date_borrow).toLocaleDateString()}
+                                                    {admin.borrowedBy} {borrow.student_name} · {formatDate(borrow.date_borrow, locale)}
                                                 </p>
                                             </div>
                                         </div>
