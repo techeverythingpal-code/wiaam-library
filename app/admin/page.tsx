@@ -5,6 +5,7 @@ import { Card, Button, Chip } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
 import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
+import { SESSION_COOKIE, verifySession } from '@/lib/session';
 
 async function getUser(userId: string) {
     const rows = await sql`
@@ -57,7 +58,7 @@ async function getRecentBorrows(): Promise<RecentBorrow[]> {
 
 export default async function AdminPage() {
     const cookieStore = await cookies();
-    const sessionUserId = cookieStore.get('session_user')?.value;
+    const sessionUserId = await verifySession(cookieStore.get(SESSION_COOKIE)?.value);
 
     const [user, stats, recentBorrows, locale] = await Promise.all([
         sessionUserId ? getUser(sessionUserId) : Promise.resolve(undefined),
