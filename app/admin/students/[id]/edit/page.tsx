@@ -41,8 +41,6 @@ export default async function EditStudentPage({
             text={{
                 ...text.newStudent,
                 ...text.editStudent,
-                saveChanges: text.editBook.saveChanges,
-                delete: text.editBook.delete,
                 saving: text.common.saving,
             }}
         />
