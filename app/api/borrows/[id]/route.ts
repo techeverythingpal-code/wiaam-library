@@ -21,7 +21,7 @@ export async function PUT(
       UPDATE borrow
       SET flag = false,
           date_back = NOW()
-      WHERE borrow_id = ${id}
+      WHERE borrow_id = ${id} AND flag = true
     `;
 
         return NextResponse.json({ success: true });
