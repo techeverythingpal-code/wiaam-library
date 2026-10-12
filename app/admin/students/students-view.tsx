@@ -6,6 +6,7 @@ import { Card, Button, Chip } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
 import type { StudentWithBorrows } from './page';
 import type { Locale } from '@/lib/i18n';
+import { formatDate } from '@/lib/format';
 
 type ViewMode = 'cards' | 'table';
 
@@ -34,10 +35,6 @@ interface StudentsText {
     returnedOn: string;
     active: string;
     returned: string;
-}
-
-function formatDate(date: string) {
-    return new Date(date).toLocaleDateString();
 }
 
 export default function StudentsView({
@@ -202,8 +199,8 @@ export default function StudentsView({
                                                                     className="flex items-center justify-between text-xs text-gray-600"
                                                                 >
                                                                     <span>
-                                                                        📖 {borrow.book_name} · {text.borrowed} {formatDate(borrow.date_borrow)}
-                                                                        {borrow.date_back ? ` · ${text.returnedOn} ${formatDate(borrow.date_back)}` : ''}
+                                                                        📖 {borrow.book_name} · {text.borrowed} {formatDate(borrow.date_borrow, locale)}
+                                                                        {borrow.date_back ? ` · ${text.returnedOn} ${formatDate(borrow.date_back, locale)}` : ''}
                                                                     </span>
                                                                     <Chip size="sm" variant="soft" color={borrow.flag ? 'warning' : 'success'}>
                                                                         {borrow.flag ? text.active : text.returned}
