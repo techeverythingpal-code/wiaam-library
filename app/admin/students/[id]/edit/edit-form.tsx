@@ -20,6 +20,7 @@ interface EditStudentText {
     failedToDelete: string;
     saving: string;
     saveChanges: string;
+    cancel: string;
     delete: string;
     name: string;
     grade: string;
@@ -125,6 +126,14 @@ export default function EditStudentForm({ student, locale, text }: { student: St
                             <div className="flex gap-2">
                                 <Button type="submit" isDisabled={loading}>
                                     {loading ? text.saving : text.saveChanges}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    isDisabled={loading}
+                                    onClick={() => router.push('/admin/students')}
+                                >
+                                    {text.cancel}
                                 </Button>
                                 <Button
                                     type="button"

@@ -42,6 +42,7 @@ export default async function EditStudentPage({
                 ...text.newStudent,
                 ...text.editStudent,
                 saving: text.common.saving,
+                cancel: text.common.cancel,
             }}
         />
     );
