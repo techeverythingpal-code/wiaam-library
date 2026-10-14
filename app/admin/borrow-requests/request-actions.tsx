@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Button } from '@heroui/react';
 import type { RequestText } from '@/lib/i18n-requests';
@@ -37,6 +38,11 @@ export default function RequestActions({ requestId, isPending, text }: RequestAc
     return (
         <div className="flex flex-col items-end gap-1">
             <div className="flex items-center gap-2">
+                {isPending && (
+                    <Link href={`/admin/borrow-requests/${requestId}/convert`}>
+                        <Button size="sm">{text.adminConvert}</Button>
+                    </Link>
+                )}
                 {isPending && (
                     <Button
                         size="sm"
