@@ -34,6 +34,10 @@ const requestText = {
         adminMarkDone: 'Mark as done',
         adminDelete: 'Delete',
         adminFailed: 'Something went wrong. Please try again.',
+        adminSaving: 'Saving...',
+        adminConfirmDelete: 'Delete this request?',
+        adminPendingBadge: 'pending',
+        adminCardDesc: 'Review requests from visitors',
     },
     ar: {
         // Book details popup
@@ -63,11 +67,15 @@ const requestText = {
         adminBackToHome: 'العودة للرئيسية',
         adminNoRequests: 'لا توجد طلبات استعارة بعد.',
         adminRequestedOn: 'تاريخ الطلب',
-        adminPending: 'الطلب قيد الانتظار...',
+        adminPending: 'قيد الانتظار',
         adminDone: 'تم',
         adminMarkDone: 'تحديد كمنجز',
         adminDelete: 'حذف',
         adminFailed: 'حدث خطأ. يرجى المحاولة مرة أخرى.',
+        adminSaving: 'جارٍ الحفظ...',
+        adminConfirmDelete: 'هل تريد حذف هذا الطلب؟',
+        adminPendingBadge: 'قيد الانتظار',
+        adminCardDesc: 'مراجعة طلبات الزوار',
     },
 } as const;
 

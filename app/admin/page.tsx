@@ -7,6 +7,7 @@ import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
 import { SESSION_COOKIE, verifySession } from '@/lib/session';
 import { formatDate } from '@/lib/format';
+import { getRequestText } from '@/lib/i18n-requests';
 
 async function getUser(userId: string) {
     const rows = await sql`
@@ -18,16 +19,18 @@ async function getUser(userId: string) {
 }
 
 async function getStats() {
-    const [books, students, activeBorrows] = await Promise.all([
+    const [books, students, activeBorrows, pendingRequests] = await Promise.all([
         sql`SELECT COUNT(*)::int AS count FROM book`,
         sql`SELECT COUNT(*)::int AS count FROM student`,
         sql`SELECT COUNT(*)::int AS count FROM borrow WHERE flag = true`,
+        sql`SELECT COUNT(*)::int AS count FROM borrow_request WHERE status = 'pending'`,
     ]);
 
     return {
         bookCount: books[0].count as number,
         studentCount: students[0].count as number,
         activeBorrowCount: activeBorrows[0].count as number,
+        pendingRequestCount: pendingRequests[0].count as number,
     };
 }
 
@@ -69,7 +72,13 @@ export default async function AdminPage() {
     ]);
 
     const { admin, common } = t(locale);
-    const statValues = [stats.bookCount, stats.studentCount, stats.activeBorrowCount];
+    const requestText = getRequestText(locale);
+    const statValues = [
+        stats.bookCount,
+        stats.studentCount,
+        stats.activeBorrowCount,
+        stats.pendingRequestCount,
+    ];
 
     const statCards = [
         {
@@ -99,6 +108,15 @@ export default async function AdminPage() {
             numberColor: 'text-pink-600',
             description: admin.activeBorrowsDesc,
         },
+        {
+            href: '/admin/borrow-requests',
+            label: requestText.adminTitle,
+            icon: '📨',
+            cardBg: 'bg-gradient-to-br from-violet-50 to-violet-100/60 border-violet-200/60',
+            iconBg: 'bg-violet-200/70',
+            numberColor: 'text-violet-600',
+            description: requestText.adminCardDesc,
+        },
     ] as const;
 
     return (
@@ -118,15 +136,22 @@ export default async function AdminPage() {
             />
 
             <div className="max-w-5xl mx-auto px-6 py-10">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                     {statCards.map((stat, i) => (
                         <Link key={stat.href} href={stat.href}>
                             <Card
                                 className={`${stat.cardBg} border-2 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 h-full`}
                             >
                                 <Card.Content className="p-6">
-                                    <div className={`${stat.iconBg} w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4 shadow-sm`}>
-                                        {stat.icon}
+                                    <div className="flex items-start justify-between mb-4">
+                                        <div className={`${stat.iconBg} w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-sm`}>
+                                            {stat.icon}
+                                        </div>
+                                        {stat.href === '/admin/borrow-requests' && statValues[i] > 0 && (
+                                            <Chip size="sm" variant="soft" color="warning">
+                                                {statValues[i]} {requestText.adminPendingBadge}
+                                            </Chip>
+                                        )}
                                     </div>
                                     <p className={`text-5xl font-extrabold ${stat.numberColor} mb-1`}>
                                         {statValues[i]}
