@@ -95,7 +95,7 @@ const requestText = {
         adminDelete: 'حذف',
         adminFailed: 'حدث خطأ. يرجى المحاولة مرة أخرى.',
         adminSaving: 'جارٍ الحفظ...',
-        adminStudentId: 'رقم الطالب',
+        adminStudentId: 'رقم هوية الطالب',
         adminConfirmDelete: 'هل تريد حذف هذا الطلب؟',
         adminPendingBadge: 'قيد الانتظار',
         adminCardDesc: 'مراجعة طلبات الزوار',
