@@ -9,8 +9,6 @@ import type { StudentWithBorrows } from './page';
 import type { Locale } from '@/lib/i18n';
 import { formatDate } from '@/lib/format';
 
-type ViewMode = 'cards' | 'table';
-
 interface StudentsText {
     title: string;
     subtitle: string;
@@ -47,7 +45,6 @@ export default function StudentsView({
     locale: Locale;
     text: StudentsText;
 }) {
-    const [viewMode, setViewMode] = useState<ViewMode>('cards');
     const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
     function toggleHistory(studentId: number) {
@@ -84,60 +81,12 @@ export default function StudentsView({
             />
 
             <div className="max-w-5xl mx-auto px-6 py-10">
-                <div className="flex gap-2 mb-6">
-                    <Button
-                        size="sm"
-                        variant={viewMode === 'cards' ? 'primary' : 'outline'}
-                        onClick={() => setViewMode('cards')}
-                    >
-                        {text.cardsView}
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant={viewMode === 'table' ? 'primary' : 'outline'}
-                        onClick={() => setViewMode('table')}
-                    >
-                        {text.detailedList}
-                    </Button>
-                </div>
-
                 {students.length === 0 ? (
                     <Card className="border-2 border-gray-100">
                         <Card.Content>
                             <p className="text-gray-500 py-6 text-center">{text.noStudents}</p>
                         </Card.Content>
                     </Card>
-                ) : viewMode === 'cards' ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                        {students.map((student) => {
-                            const activeCount = student.borrows.filter((b) => b.flag).length;
-                            return (
-                                <Card
-                                    key={student.student_id}
-                                    className="border-2 border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-                                >
-                                    <Card.Content className="flex flex-col gap-3">
-                                        <div>
-                                            <p className="text-xs text-gray-400">#{student.student_id}</p>
-                                            <p className="font-semibold text-lg leading-snug">{student.student_name}</p>
-                                            <p className="text-sm text-gray-500">
-                                                {student.grade ? `${text.grade} ${student.grade}` : text.noGrade}
-                                                {student.phone ? ` · ${student.phone}` : ''}
-                                            </p>
-                                        </div>
-                                        {activeCount > 0 && (
-                                            <Chip size="sm" variant="soft" color="warning">
-                                                {activeCount} {locale === 'en' ? (activeCount > 1 ? text.activeBorrows : text.activeBorrow) : text.activeBorrows}
-                                            </Chip>
-                                        )}
-                                        <Link href={`/admin/students/${student.student_id}/edit`} className="mt-auto">
-                                            <Button variant="outline" className="w-full">{text.edit}</Button>
-                                        </Link>
-                                    </Card.Content>
-                                </Card>
-                            );
-                        })}
-                    </div>
                 ) : (
                     <Card className="border-2 border-gray-100 overflow-hidden">
                         <table className="w-full text-sm">
