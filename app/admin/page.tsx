@@ -73,6 +73,8 @@ export default async function AdminPage() {
 
     const { admin, common } = t(locale);
     const requestText = getRequestText(locale);
+    const REQUESTS_HREF = '/admin/borrow-requests';
+    const hasPendingRequests = stats.pendingRequestCount > 0;
     const statValues = [
         stats.bookCount,
         stats.studentCount,
@@ -109,11 +111,11 @@ export default async function AdminPage() {
             description: admin.activeBorrowsDesc,
         },
         {
-            href: '/admin/borrow-requests',
+            href: REQUESTS_HREF,
             label: requestText.adminTitle,
-            icon: '📨',
+            icon: '🔔',
             cardBg: 'bg-gradient-to-br from-violet-50 to-violet-100/60 border-violet-200/60',
-            iconBg: 'bg-violet-200/70',
+            iconBg: 'bg-violet-300',
             numberColor: 'text-violet-600',
             description: requestText.adminCardDesc,
         },
@@ -140,17 +142,25 @@ export default async function AdminPage() {
                     {statCards.map((stat, i) => (
                         <Link key={stat.href} href={stat.href}>
                             <Card
-                                className={`${stat.cardBg} border-2 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 h-full`}
+                                className={`${stat.cardBg} border-2 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 h-full ${
+                                    stat.href === REQUESTS_HREF && hasPendingRequests
+                                        ? 'ring-2 ring-red-500 shadow-lg shadow-red-200'
+                                        : ''
+                                }`}
                             >
                                 <Card.Content className="p-6">
                                     <div className="flex items-start justify-between mb-4">
                                         <div className={`${stat.iconBg} w-16 h-16 rounded-2xl flex items-center justify-center text-3xl shadow-sm`}>
                                             {stat.icon}
                                         </div>
-                                        {stat.href === '/admin/borrow-requests' && statValues[i] > 0 && (
-                                            <Chip size="sm" variant="soft" color="warning">
-                                                {statValues[i]} {requestText.adminPendingBadge}
-                                            </Chip>
+                                        {stat.href === REQUESTS_HREF && hasPendingRequests && (
+                                            <span className="flex shrink-0 items-center gap-2 rounded-full bg-red-600 px-3 py-1.5 text-sm font-bold text-white shadow-lg shadow-red-500/40">
+                                                <span className="relative flex h-2.5 w-2.5">
+                                                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
+                                                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
+                                                </span>
+                                                {stats.pendingRequestCount} {requestText.adminPendingBadge}
+                                            </span>
                                         )}
                                     </div>
                                     <p className={`text-5xl font-extrabold ${stat.numberColor} mb-1`}>
