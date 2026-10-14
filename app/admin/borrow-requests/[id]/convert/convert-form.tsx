@@ -21,6 +21,8 @@ interface ConvertFormProps {
     note: string | null;
     bookName: string;
     students: Student[];
+    requestedStudentId: number | null;
+    matchedStudentId: number | null;
     suggestedBorrowId: number;
     blocked: 'done' | 'borrowed' | null;
     locale: Locale;
@@ -34,6 +36,8 @@ export default function ConvertForm({
     note,
     bookName,
     students,
+    requestedStudentId,
+    matchedStudentId,
     suggestedBorrowId,
     blocked,
     locale,
@@ -41,7 +45,7 @@ export default function ConvertForm({
 }: ConvertFormProps) {
     const router = useRouter();
     const [borrowId, setBorrowId] = useState(String(suggestedBorrowId));
-    const [studentId, setStudentId] = useState<Key | null>(null);
+    const [studentId, setStudentId] = useState<Key | null>(matchedStudentId);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -104,6 +108,11 @@ export default function ConvertForm({
                             {requesterName} ·{' '}
                             <span dir="ltr">{phone}</span>
                         </p>
+                        {requestedStudentId !== null && (
+                            <p className="text-sm text-gray-600">
+                                {text.adminStudentId}: <span dir="ltr">{requestedStudentId}</span>
+                            </p>
+                        )}
                         {note && <p className="text-sm text-gray-500 mt-1 break-words">“{note}”</p>}
                     </Card.Content>
                 </Card>
@@ -130,6 +139,16 @@ export default function ConvertForm({
                                         required
                                     />
                                 </div>
+
+                                {matchedStudentId !== null ? (
+                                    <p className="rounded-xl bg-green-50 text-green-700 text-sm p-3">
+                                        ✓ {text.convertMatched}
+                                    </p>
+                                ) : requestedStudentId !== null ? (
+                                    <p className="rounded-xl bg-amber-50 text-amber-700 text-sm p-3">
+                                        {text.convertNoMatch}
+                                    </p>
+                                ) : null}
 
                                 <Select selectedKey={studentId} onSelectionChange={setStudentId}>
                                     <Label>{text.convertStudent}</Label>

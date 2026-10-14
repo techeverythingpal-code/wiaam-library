@@ -14,13 +14,14 @@ const requestText = {
         // Request form
         formTitle: 'Your details',
         yourName: 'Your name',
+        studentIdLabel: 'Student ID number',
         phone: 'Phone number',
         note: 'Note (optional)',
         sendRequest: 'Send request',
         sending: 'Sending...',
         cancel: 'Cancel',
         success: 'Your request was sent. The librarian will contact you.',
-        errorInvalid: 'Please enter a valid name and phone number.',
+        errorInvalid: 'Please enter a valid name, student ID number and phone number.',
         errorDuplicate: 'You already requested this book.',
         errorGeneric: 'Something went wrong. Please try again.',
         // Admin page
@@ -35,6 +36,7 @@ const requestText = {
         adminDelete: 'Delete',
         adminFailed: 'Something went wrong. Please try again.',
         adminSaving: 'Saving...',
+        adminStudentId: 'Student ID',
         adminConfirmDelete: 'Delete this request?',
         adminPendingBadge: 'pending',
         adminCardDesc: 'Review requests from visitors',
@@ -55,6 +57,8 @@ const requestText = {
         convertNoStudents: 'No students yet. Add a student first.',
         convertBookBorrowedNotice: 'This book is currently borrowed. You can convert the request after it is returned.',
         convertDoneNotice: 'This request has already been handled.',
+        convertMatched: 'Student selected automatically from the ID number the requester entered.',
+        convertNoMatch: 'No student found with the ID number the requester entered. Please choose a student manually.',
     },
     ar: {
         // Book details popup
@@ -69,13 +73,14 @@ const requestText = {
         // Request form
         formTitle: 'بياناتك',
         yourName: 'اسمك',
+        studentIdLabel: 'رقم الطالب',
         phone: 'رقم الهاتف',
         note: 'ملاحظة (اختياري)',
         sendRequest: 'إرسال الطلب',
         sending: 'جارٍ الإرسال...',
         cancel: 'إلغاء',
         success: 'تم إرسال طلبك. سيتواصل معك أمين المكتبة.',
-        errorInvalid: 'يرجى إدخال اسم ورقم هاتف صحيحين.',
+        errorInvalid: 'يرجى إدخال اسم ورقم طالب ورقم هاتف صحيحين.',
         errorDuplicate: 'لقد طلبت هذا الكتاب مسبقًا.',
         errorGeneric: 'حدث خطأ. يرجى المحاولة مرة أخرى.',
         // Admin page
@@ -90,6 +95,7 @@ const requestText = {
         adminDelete: 'حذف',
         adminFailed: 'حدث خطأ. يرجى المحاولة مرة أخرى.',
         adminSaving: 'جارٍ الحفظ...',
+        adminStudentId: 'رقم الطالب',
         adminConfirmDelete: 'هل تريد حذف هذا الطلب؟',
         adminPendingBadge: 'قيد الانتظار',
         adminCardDesc: 'مراجعة طلبات الزوار',
@@ -110,6 +116,9 @@ const requestText = {
         convertNoStudents: 'لا يوجد طلاب بعد. أضف طالبًا أولًا.',
         convertBookBorrowedNotice: 'هذا الكتاب مستعار حاليًا. يمكنك تحويل الطلب بعد إرجاعه.',
         convertDoneNotice: 'تمت معالجة هذا الطلب مسبقًا.',
+        convertMatched: 'تم اختيار الطالب تلقائيًا حسب رقم الطالب الذي أدخله مقدّم الطلب.',
+        convertNoMatch: 'لم يتم العثور على طالب بالرقم الذي أدخله مقدّم الطلب. يرجى اختيار الطالب يدويًا.',
+
     },
 } as const;
 

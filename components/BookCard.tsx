@@ -89,6 +89,7 @@ function BookDetails({
 }) {
     const [showForm, setShowForm] = useState(false);
     const [requesterName, setRequesterName] = useState('');
+    const [studentId, setStudentId] = useState('');
     const [phone, setPhone] = useState('');
     const [note, setNote] = useState('');
     const [error, setError] = useState('');
@@ -106,6 +107,7 @@ function BookDetails({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     bookId: book.book_id,
+                    studentId,
                     requesterName,
                     phone,
                     note,
@@ -193,6 +195,22 @@ function BookDetails({
                                 required
                             />
                         </div>
+
+                        <div className="flex flex-col gap-1">
+                            <Label htmlFor="requesterStudentId">{text.studentIdLabel}</Label>
+                            <Input
+                                id="requesterStudentId"
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                                value={studentId}
+                                onChange={(e) => setStudentId(e.target.value.replace(/\D/g, ''))}
+                                maxLength={10}
+                                required
+                            />
+                        </div>
+
+
 
                         <div className="flex flex-col gap-1">
                             <Label htmlFor="requesterPhone">{text.phone}</Label>

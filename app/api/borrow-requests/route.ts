@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/db';
 
 const PHONE_PATTERN = /^[0-9+\-\s()]{7,20}$/;
+const MAX_ID = 2147483647; // Postgres int4
 
 export async function POST(request: Request) {
     let body: {
         bookId?: unknown;
+        studentId?: unknown;
         requesterName?: unknown;
         phone?: unknown;
         note?: unknown;
@@ -21,6 +23,8 @@ export async function POST(request: Request) {
     }
 
     const bookId = Number(body.bookId);
+    const studentIdRaw = typeof body.studentId === 'string' ? body.studentId.trim() : String(body.studentId ?? '');
+    const studentId = /^\d+$/.test(studentIdRaw) ? Number(studentIdRaw) : NaN;
     const requesterName =
         typeof body.requesterName === 'string' ? body.requesterName.trim() : '';
     const phone = typeof body.phone === 'string' ? body.phone.trim() : '';
@@ -28,6 +32,9 @@ export async function POST(request: Request) {
 
     if (
         !Number.isInteger(bookId) ||
+        !Number.isInteger(studentId) ||
+        studentId < 1 ||
+        studentId > MAX_ID ||
         requesterName.length < 2 ||
         requesterName.length > 100 ||
         !PHONE_PATTERN.test(phone) ||
@@ -53,7 +60,9 @@ export async function POST(request: Request) {
 
         const existing = await sql`
       SELECT request_id FROM borrow_request
-      WHERE book_id = ${bookId} AND phone = ${phone} AND status = 'pending'
+      WHERE book_id = ${bookId}
+        AND (phone = ${phone} OR student_id = ${studentId})
+        AND status = 'pending'
     `;
 
         if (existing.length > 0) {
@@ -64,8 +73,8 @@ export async function POST(request: Request) {
         }
 
         await sql`
-      INSERT INTO borrow_request (book_id, requester_name, phone, note)
-      VALUES (${bookId}, ${requesterName}, ${phone}, ${note === '' ? null : note})
+      INSERT INTO borrow_request (book_id, student_id, requester_name, phone, note)
+      VALUES (${bookId}, ${studentId}, ${requesterName}, ${phone}, ${note === '' ? null : note})
     `;
 
         return NextResponse.json({ success: true });

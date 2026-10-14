@@ -11,6 +11,7 @@ import { formatDate } from '@/lib/format';
 interface BorrowRequest {
     request_id: number;
     requester_name: string;
+    student_id: number | null;
     phone: string;
     note: string | null;
     status: string;
@@ -30,6 +31,7 @@ async function getRequests(page: number): Promise<BorrowRequest[]> {
     SELECT
       r.request_id,
       r.requester_name,
+      r.student_id,
       r.phone,
       r.note,
       r.status,
@@ -89,7 +91,14 @@ export default async function BorrowRequestsPage({
                                             <div className="min-w-0">
                                                 <p className="font-medium">📖 {req.book_name}</p>
                                                 <p className="text-sm text-gray-700 mt-1">
-                                                    {req.requester_name} ·{' '}
+                                                    {req.requester_name}
+                                                    {req.student_id !== null && (
+                                                        <>
+                                                            {' '}· {text.adminStudentId} {req.student_id}
+                                                        </>
+                                                    )}{' '}
+                                                    ·{' '}
+                                                    
                                                     <a
                                                         href={`tel:${req.phone}`}
                                                         dir="ltr"

@@ -7,6 +7,7 @@ import ConvertForm from './convert-form';
 interface RequestRow {
     request_id: number;
     requester_name: string;
+    student_id: number | null;
     phone: string;
     note: string | null;
     status: string;
@@ -24,6 +25,7 @@ async function getRequest(requestId: number): Promise<RequestRow | undefined> {
     SELECT
       r.request_id,
       r.requester_name,
+      r.student_id,
       r.phone,
       r.note,
       r.status,
@@ -69,6 +71,13 @@ export default async function ConvertRequestPage({
 
     if (!req) notFound();
 
+    const requestedStudentId = req.student_id;
+    const matchedStudentId =
+        requestedStudentId !== null &&
+        students.some((s) => s.student_id === requestedStudentId)
+            ? requestedStudentId
+            : null;
+
     const blocked =
         req.status !== 'pending' ? 'done' : req.is_borrowed ? 'borrowed' : null;
 
@@ -80,6 +89,8 @@ export default async function ConvertRequestPage({
             note={req.note}
             bookName={req.book_name}
             students={students}
+            requestedStudentId={requestedStudentId}
+            matchedStudentId={matchedStudentId}
             suggestedBorrowId={suggestedBorrowId}
             blocked={blocked}
             locale={locale}
