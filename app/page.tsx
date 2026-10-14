@@ -1,10 +1,12 @@
 import { sql } from '@/lib/db';
-import { Card, Input, Chip, Button } from '@heroui/react';
+import { Input, Button } from '@heroui/react';
 import Link from 'next/link';
 import PageHeader from '@/components/PageHeader';
 import Pagination, { PAGE_SIZE } from '@/components/Pagination';
+import BookCard from '@/components/BookCard';
 import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
+import { getRequestText } from '@/lib/i18n-requests';
 
 interface Book {
   book_id: number;
@@ -12,6 +14,7 @@ interface Book {
   auther: string;
   age_group: string | null;
   book_cover: string | null;
+  is_available: boolean;
 }
 
 async function getBookCount(query: string): Promise<number> {
@@ -34,7 +37,12 @@ async function getBooks(query: string, page: number): Promise<Book[]> {
 
   if (query.trim() === '') {
     return await sql`
-      SELECT book_id, book_name, auther, age_group, book_cover
+      SELECT
+        book_id, book_name, auther, age_group, book_cover,
+        NOT EXISTS (
+          SELECT 1 FROM borrow br
+          WHERE br.book_id = book.book_id AND br.flag = true
+        ) AS is_available
       FROM book
       ORDER BY book_name ASC
       LIMIT ${PAGE_SIZE} OFFSET ${offset}
@@ -43,7 +51,12 @@ async function getBooks(query: string, page: number): Promise<Book[]> {
 
   const likeQuery = `%${query}%`;
   return await sql`
-    SELECT book_id, book_name, auther, age_group, book_cover
+    SELECT
+      book_id, book_name, auther, age_group, book_cover,
+      NOT EXISTS (
+        SELECT 1 FROM borrow br
+        WHERE br.book_id = book.book_id AND br.flag = true
+      ) AS is_available
     FROM book
     WHERE book_name ILIKE ${likeQuery} OR auther ILIKE ${likeQuery}
     ORDER BY book_name ASC
@@ -66,6 +79,7 @@ export default async function Home({
 
   const books = await getBooks(query, currentPage);
   const { home, common } = t(locale);
+  const requestText = getRequestText(locale);
 
   return (
     <main className="min-h-screen">
@@ -97,27 +111,13 @@ export default async function Home({
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
               {books.map((book) => (
-                <Card
+                <BookCard
                   key={book.book_id}
-                  className="border-2 border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-                >
-                  {book.book_cover && (
-                    <img
-                      src={book.book_cover}
-                      alt={book.book_name}
-                      className="w-full h-48 object-cover"
-                    />
-                  )}
-                  <Card.Header>
-                    <Card.Title>{book.book_name}</Card.Title>
-                    <Card.Description>{common.by} {book.auther}</Card.Description>
-                  </Card.Header>
-                  <Card.Content>
-                    {book.age_group && (
-                      <Chip size="sm" variant="soft">{book.age_group}</Chip>
-                    )}
-                  </Card.Content>
-                </Card>
+                  book={book}
+                  isAvailable={book.is_available}
+                  byLabel={common.by}
+                  text={requestText}
+                />
               ))}
             </div>
 
