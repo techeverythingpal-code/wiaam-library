@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { sql } from '@/lib/db';
 import { Card, Button, Chip } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
+import Pagination, { PAGE_SIZE } from '@/components/Pagination';
 import ReturnButton from './return-button';
 import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
@@ -15,7 +16,14 @@ interface Borrow {
     student_name: string;
 }
 
-async function getBorrows(): Promise<Borrow[]> {
+async function getBorrowCount(): Promise<number> {
+    const rows = await sql`SELECT COUNT(*)::int AS total FROM borrow` as { total: number }[];
+    return rows[0].total;
+}
+
+async function getBorrows(page: number): Promise<Borrow[]> {
+    const offset = (page - 1) * PAGE_SIZE;
+
     return await sql`
     SELECT
       b.borrow_id,
@@ -27,12 +35,24 @@ async function getBorrows(): Promise<Borrow[]> {
     FROM borrow b
     JOIN book bk ON bk.book_id = b.book_id
     JOIN student s ON s.student_id = b.student_id
-    ORDER BY b.date_borrow DESC
+    ORDER BY b.date_borrow DESC, b.borrow_id DESC
+    LIMIT ${PAGE_SIZE} OFFSET ${offset}
   ` as Borrow[];
 }
 
-export default async function BorrowsPage() {
-    const [borrows, locale] = await Promise.all([getBorrows(), getLocale()]);
+export default async function BorrowsPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ page?: string }>;
+}) {
+    const { page } = await searchParams;
+
+    const [totalBorrows, locale] = await Promise.all([getBorrowCount(), getLocale()]);
+    const totalPages = Math.max(1, Math.ceil(totalBorrows / PAGE_SIZE));
+    const requestedPage = Math.max(1, parseInt(page ?? '1', 10) || 1);
+    const currentPage = Math.min(requestedPage, totalPages);
+
+    const borrows = await getBorrows(currentPage);
     const fullText = t(locale); const text = { ...fullText.borrows, ...fullText.common };
 
     return (
@@ -64,41 +84,50 @@ export default async function BorrowsPage() {
                         </Card.Content>
                     </Card>
                 ) : (
-                    <div className="flex flex-col gap-3">
-                        {borrows.map((borrow) => (
-                            <Card key={borrow.borrow_id} className="border-2 border-gray-100">
-                                <Card.Content className="flex items-center justify-between">
-                                    <div>
-                                        <p className="font-medium">
-                                            #{borrow.borrow_id} — {borrow.book_name}
-                                        </p>
-                                        <p className="text-sm text-gray-500">
-                                            {borrow.student_name} · {text.borrowed}{' '}
-                                            {formatDate(borrow.date_borrow, locale)}
-                                            {borrow.date_back
-                                                ? ` · ${text.returnedOn} ${formatDate(borrow.date_back, locale)}`
-                                                : ''}
-                                        </p>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <Chip size="sm" variant="soft" color={borrow.flag ? 'warning' : 'success'}>
-                                            {borrow.flag ? text.active : text.returned}
-                                        </Chip>
-                                        {borrow.flag && (
-                                            <ReturnButton
-                                                borrowId={borrow.borrow_id}
-                                                text={{
-                                                    saving: text.saving,
-                                                    markReturned: text.markReturned,
-                                                    failedToReturn: text.failedToReturn,
-                                                }}
-                                            />
-                                        )}
-                                    </div>
-                                </Card.Content>
-                            </Card>
-                        ))}
-                    </div>
+                    <>
+                        <div className="flex flex-col gap-3">
+                            {borrows.map((borrow) => (
+                                <Card key={borrow.borrow_id} className="border-2 border-gray-100">
+                                    <Card.Content className="flex items-center justify-between">
+                                        <div>
+                                            <p className="font-medium">
+                                                #{borrow.borrow_id} — {borrow.book_name}
+                                            </p>
+                                            <p className="text-sm text-gray-500">
+                                                {borrow.student_name} · {text.borrowed}{' '}
+                                                {formatDate(borrow.date_borrow, locale)}
+                                                {borrow.date_back
+                                                    ? ` · ${text.returnedOn} ${formatDate(borrow.date_back, locale)}`
+                                                    : ''}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <Chip size="sm" variant="soft" color={borrow.flag ? 'warning' : 'success'}>
+                                                {borrow.flag ? text.active : text.returned}
+                                            </Chip>
+                                            {borrow.flag && (
+                                                <ReturnButton
+                                                    borrowId={borrow.borrow_id}
+                                                    text={{
+                                                        saving: text.saving,
+                                                        markReturned: text.markReturned,
+                                                        failedToReturn: text.failedToReturn,
+                                                    }}
+                                                />
+                                            )}
+                                        </div>
+                                    </Card.Content>
+                                </Card>
+                            ))}
+                        </div>
+
+                        <Pagination
+                            page={currentPage}
+                            totalPages={totalPages}
+                            basePath="/admin/borrows"
+                            locale={locale}
+                        />
+                    </>
                 )}
             </div>
         </main>

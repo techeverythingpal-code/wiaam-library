@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import { Card, Button, Chip } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
 import ImportExcel from '@/components/ImportExcel';
+import Pagination, { PAGE_SIZE } from '@/components/Pagination';
 import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
 
@@ -13,16 +14,35 @@ interface Book {
     age_group: string | null;
 }
 
-async function getBooks(): Promise<Book[]> {
+async function getBookCount(): Promise<number> {
+    const rows = await sql`SELECT COUNT(*)::int AS total FROM book` as { total: number }[];
+    return rows[0].total;
+}
+
+async function getBooks(page: number): Promise<Book[]> {
+    const offset = (page - 1) * PAGE_SIZE;
+
     return await sql`
     SELECT book_id, book_name, auther, age_group
     FROM book
     ORDER BY book_id ASC
+    LIMIT ${PAGE_SIZE} OFFSET ${offset}
   ` as Book[];
 }
 
-export default async function AdminBooksPage() {
-    const [books, locale] = await Promise.all([getBooks(), getLocale()]);
+export default async function AdminBooksPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ page?: string }>;
+}) {
+    const { page } = await searchParams;
+
+    const [totalBooks, locale] = await Promise.all([getBookCount(), getLocale()]);
+    const totalPages = Math.max(1, Math.ceil(totalBooks / PAGE_SIZE));
+    const requestedPage = Math.max(1, parseInt(page ?? '1', 10) || 1);
+    const currentPage = Math.min(requestedPage, totalPages);
+
+    const books = await getBooks(currentPage);
     const { common, books: booksText } = t(locale);
 
     return (
@@ -53,28 +73,37 @@ export default async function AdminBooksPage() {
                         </Card.Content>
                     </Card>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                        {books.map((book) => (
-                            <Card
-                                key={book.book_id}
-                                className="border-2 border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-                            >
-                                <Card.Content className="flex flex-col gap-3">
-                                    <div>
-                                        <p className="text-xs text-gray-400">#{book.book_id}</p>
-                                        <p className="font-semibold text-lg leading-snug">{book.book_name}</p>
-                                        <p className="text-sm text-gray-500">{common.by} {book.auther}</p>
-                                    </div>
-                                    {book.age_group && (
-                                        <Chip size="sm" variant="soft">{book.age_group}</Chip>
-                                    )}
-                                    <Link href={`/admin/books/${book.book_id}/edit`} className="mt-auto">
-                                        <Button variant="outline" className="w-full">{common.edit}</Button>
-                                    </Link>
-                                </Card.Content>
-                            </Card>
-                        ))}
-                    </div>
+                    <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                            {books.map((book) => (
+                                <Card
+                                    key={book.book_id}
+                                    className="border-2 border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                                >
+                                    <Card.Content className="flex flex-col gap-3">
+                                        <div>
+                                            <p className="text-xs text-gray-400">#{book.book_id}</p>
+                                            <p className="font-semibold text-lg leading-snug">{book.book_name}</p>
+                                            <p className="text-sm text-gray-500">{common.by} {book.auther}</p>
+                                        </div>
+                                        {book.age_group && (
+                                            <Chip size="sm" variant="soft">{book.age_group}</Chip>
+                                        )}
+                                        <Link href={`/admin/books/${book.book_id}/edit`} className="mt-auto">
+                                            <Button variant="outline" className="w-full">{common.edit}</Button>
+                                        </Link>
+                                    </Card.Content>
+                                </Card>
+                            ))}
+                        </div>
+
+                        <Pagination
+                            page={currentPage}
+                            totalPages={totalPages}
+                            basePath="/admin/books"
+                            locale={locale}
+                        />
+                    </>
                 )}
             </div>
         </main>
