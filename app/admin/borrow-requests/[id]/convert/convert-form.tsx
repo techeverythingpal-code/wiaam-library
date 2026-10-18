@@ -8,10 +8,15 @@ import { Card, Input, Label, Button, Select, ListBox } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
 import type { Locale } from '@/lib/i18n';
 import type { RequestText } from '@/lib/i18n-requests';
+import type { CopiesText } from '@/lib/i18n-copies';
 
 interface Student {
     student_id: number;
     student_name: string;
+}
+
+interface FreeCopy {
+    copy_id: number;
 }
 
 interface ConvertFormProps {
@@ -21,12 +26,14 @@ interface ConvertFormProps {
     note: string | null;
     bookName: string;
     students: Student[];
+    copies: FreeCopy[];
     requestedStudentId: number | null;
     matchedStudentId: number | null;
     suggestedBorrowId: number;
     blocked: 'done' | 'borrowed' | null;
     locale: Locale;
     text: RequestText;
+    copiesText: CopiesText;
 }
 
 export default function ConvertForm({
@@ -36,16 +43,22 @@ export default function ConvertForm({
     note,
     bookName,
     students,
+    copies,
     requestedStudentId,
     matchedStudentId,
     suggestedBorrowId,
     blocked,
     locale,
     text,
+    copiesText,
 }: ConvertFormProps) {
     const router = useRouter();
     const [borrowId, setBorrowId] = useState(String(suggestedBorrowId));
     const [studentId, setStudentId] = useState<Key | null>(matchedStudentId);
+    // If only one copy is free, choose it automatically.
+    const [copyId, setCopyId] = useState<Key | null>(
+        copies.length === 1 ? copies[0].copy_id : null
+    );
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -58,12 +71,21 @@ export default function ConvertForm({
             return;
         }
 
+        if (copies.length > 0 && !copyId) {
+            setError(copiesText.noCopyChosen);
+            return;
+        }
+
         setLoading(true);
         try {
             const res = await fetch(`/api/borrow-requests/${requestId}/convert`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ borrowId, studentId }),
+                body: JSON.stringify({
+                    borrowId,
+                    studentId,
+                    copyId: copies.length > 0 ? copyId : null,
+                }),
             });
 
             if (res.ok) {
@@ -76,6 +98,7 @@ export default function ConvertForm({
             if (data.code === 'book_taken') setError(text.convertErrorBookTaken);
             else if (data.code === 'borrow_id_exists') setError(text.convertErrorBorrowId);
             else if (data.code === 'not_pending') setError(text.convertErrorNotPending);
+            else if (data.code === 'copy_required') setError(copiesText.noCopyChosen);
             else setError(text.adminFailed);
         } catch {
             setError(text.adminFailed);
@@ -170,6 +193,29 @@ export default function ConvertForm({
                                         </ListBox>
                                     </Select.Popover>
                                 </Select>
+
+                                {copies.length > 0 && (
+                                    <Select selectedKey={copyId} onSelectionChange={setCopyId}>
+                                        <Label>{copiesText.chooseCopy}</Label>
+                                        <Select.Trigger>
+                                            <Select.Value />
+                                            <Select.Indicator />
+                                        </Select.Trigger>
+                                        <Select.Popover>
+                                            <ListBox>
+                                                {copies.map((copy) => (
+                                                    <ListBox.Item
+                                                        key={copy.copy_id}
+                                                        id={copy.copy_id}
+                                                        textValue={`${copiesText.copyId} #${copy.copy_id}`}
+                                                    >
+                                                        {`${copiesText.copyId} #${copy.copy_id}`}
+                                                    </ListBox.Item>
+                                                ))}
+                                            </ListBox>
+                                        </Select.Popover>
+                                    </Select>
+                                )}
 
                                 {error && <p className="text-red-500 text-sm">{error}</p>}
                                 <Button type="submit" isDisabled={loading}>

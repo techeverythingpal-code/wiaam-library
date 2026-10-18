@@ -29,7 +29,17 @@ interface EditBookText {
     coverUrl: string;
 }
 
-export default function EditBookForm({ book, locale, text }: { book: Book; locale: Locale; text: EditBookText }) {
+export default function EditBookForm({
+    book,
+    locale,
+    text,
+    children,
+}: {
+    book: Book;
+    locale: Locale;
+    text: EditBookText;
+    children?: React.ReactNode;
+}) {
     const router = useRouter();
     const [bookName, setBookName] = useState(book.book_name);
     const [auther, setAuther] = useState(book.auther);
@@ -94,7 +104,7 @@ export default function EditBookForm({ book, locale, text }: { book: Book; local
                 locale={locale}
             />
 
-            <div className="max-w-md mx-auto px-6 py-10">
+            <div className="max-w-md mx-auto px-6 py-10 flex flex-col gap-6">
                 <Card className="border-2 border-gray-100">
                     <Card.Content>
                         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -161,6 +171,8 @@ export default function EditBookForm({ book, locale, text }: { book: Book; local
                         </form>
                     </Card.Content>
                 </Card>
+
+                {children}
             </div>
         </main>
     );

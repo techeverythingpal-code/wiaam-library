@@ -24,6 +24,11 @@ export interface ImportConfig {
     sampleRow: string[];
     findExistingIds: (ids: number[]) => Promise<number[]>;
     insertRows: (rows: ParsedRow[]) => Promise<void>;
+    // Optional second ID column (for example a copy ID next to a book ID).
+    // It may be empty. When filled, it must be a valid number, unique in the
+    // file and not already in the database, otherwise the whole row is skipped.
+    secondaryIdKey?: string;
+    findExistingSecondaryIds?: (ids: number[]) => Promise<number[]>;
 }
 
 type SkipCode = 'exists' | 'duplicateInFile' | 'invalidId' | 'missingRequired';
@@ -147,11 +152,14 @@ export function importHandler(config: ImportConfig) {
         // ---- validate ----
         const skipped: { row: number; id: string; code: SkipCode }[] = [];
         const seen = new Set<number>();
+        const seenSecondary = new Set<number>();
         const valid: { rowNumber: number; values: ParsedRow }[] = [];
 
         for (const { rowNumber, values } of parsed) {
             const rawId = values[config.idKey];
             const id = Number(rawId);
+            const rawSecondary = config.secondaryIdKey ? values[config.secondaryIdKey] : '';
+            const secondary = Number(rawSecondary);
 
             if (config.columns.some((c) => c.required && !values[c.key])) {
                 skipped.push({ row: rowNumber, id: rawId, code: 'missingRequired' });
@@ -159,8 +167,17 @@ export function importHandler(config: ImportConfig) {
                 skipped.push({ row: rowNumber, id: rawId, code: 'invalidId' });
             } else if (seen.has(id)) {
                 skipped.push({ row: rowNumber, id: rawId, code: 'duplicateInFile' });
+            } else if (
+                rawSecondary !== '' &&
+                (!/^\d+$/.test(rawSecondary) || secondary < 1 || secondary > MAX_ID)
+            ) {
+                // The skipped list shows the bad secondary value (for example the copy ID).
+                skipped.push({ row: rowNumber, id: rawSecondary, code: 'invalidId' });
+            } else if (rawSecondary !== '' && seenSecondary.has(secondary)) {
+                skipped.push({ row: rowNumber, id: rawSecondary, code: 'duplicateInFile' });
             } else {
                 seen.add(id);
+                if (rawSecondary !== '') seenSecondary.add(secondary);
                 valid.push({ rowNumber, values });
             }
         }
@@ -168,10 +185,27 @@ export function importHandler(config: ImportConfig) {
         // ---- skip IDs already in the database ----
         try {
             const existing = new Set(await config.findExistingIds(valid.map((v) => Number(v.values[config.idKey]))));
+
+            // IDs of the optional second column (for example copy IDs) already in the database
+            const secondaryKey = config.secondaryIdKey;
+            let existingSecondary = new Set<number>();
+            if (secondaryKey && config.findExistingSecondaryIds) {
+                const secondaryIds = valid
+                    .map((v) => v.values[secondaryKey])
+                    .filter((v) => v !== '')
+                    .map(Number);
+                if (secondaryIds.length > 0) {
+                    existingSecondary = new Set(await config.findExistingSecondaryIds(secondaryIds));
+                }
+            }
+
             const toInsert: ParsedRow[] = [];
             for (const { rowNumber, values } of valid) {
+                const secondaryValue = secondaryKey ? values[secondaryKey] : '';
                 if (existing.has(Number(values[config.idKey]))) {
                     skipped.push({ row: rowNumber, id: values[config.idKey], code: 'exists' });
+                } else if (secondaryValue !== '' && existingSecondary.has(Number(secondaryValue))) {
+                    skipped.push({ row: rowNumber, id: secondaryValue, code: 'exists' });
                 } else {
                     toInsert.push(values);
                 }

@@ -6,6 +6,7 @@ import type { Key } from '@heroui/react';
 import { Card, Input, Label, Button, Select, ListBox } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
 import type { Locale } from '@/lib/i18n';
+import type { CopiesText } from '@/lib/i18n-copies';
 
 interface Student {
     student_id: number;
@@ -15,6 +16,11 @@ interface Student {
 interface Book {
     book_id: number;
     book_name: string;
+}
+
+interface FreeCopy {
+    copy_id: number;
+    book_id: number;
 }
 
 interface NewBorrowText {
@@ -34,20 +40,36 @@ interface NewBorrowText {
 export default function NewBorrowForm({
     students,
     books,
+    copies,
     locale,
     text,
+    copiesText,
 }: {
     students: Student[];
     books: Book[];
+    copies: FreeCopy[];
     locale: Locale;
     text: NewBorrowText;
+    copiesText: CopiesText;
 }) {
     const router = useRouter();
     const [borrowId, setBorrowId] = useState('');
     const [bookId, setBookId] = useState<Key | null>(null);
+    const [copyId, setCopyId] = useState<Key | null>(null);
     const [studentId, setStudentId] = useState<Key | null>(null);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Free copies of the book that is selected right now
+    const copiesOfBook =
+        bookId === null
+            ? []
+            : copies.filter((c) => c.book_id === Number(bookId));
+
+    function handleBookChange(key: Key | null) {
+        setBookId(key);
+        setCopyId(null); // a copy from the previous book must not stay selected
+    }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -58,12 +80,22 @@ export default function NewBorrowForm({
             return;
         }
 
+        if (copiesOfBook.length > 0 && !copyId) {
+            setError(copiesText.noCopyChosen);
+            return;
+        }
+
         setLoading(true);
 
         const res = await fetch('/api/borrows', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ borrowId, bookId, studentId }),
+            body: JSON.stringify({
+                borrowId,
+                bookId,
+                studentId,
+                copyId: copiesOfBook.length > 0 ? copyId : null,
+            }),
         });
 
         setLoading(false);
@@ -112,7 +144,7 @@ export default function NewBorrowForm({
 
                                 <Select
                                     selectedKey={bookId}
-                                    onSelectionChange={setBookId}
+                                    onSelectionChange={handleBookChange}
                                 >
                                     <Label>{text.book}</Label>
                                     <Select.Trigger>
@@ -133,6 +165,32 @@ export default function NewBorrowForm({
                                         </ListBox>
                                     </Select.Popover>
                                 </Select>
+
+                                {copiesOfBook.length > 0 && (
+                                    <Select
+                                        selectedKey={copyId}
+                                        onSelectionChange={setCopyId}
+                                    >
+                                        <Label>{copiesText.chooseCopy}</Label>
+                                        <Select.Trigger>
+                                            <Select.Value />
+                                            <Select.Indicator />
+                                        </Select.Trigger>
+                                        <Select.Popover>
+                                            <ListBox>
+                                                {copiesOfBook.map((copy) => (
+                                                    <ListBox.Item
+                                                        key={copy.copy_id}
+                                                        id={copy.copy_id}
+                                                        textValue={`${copiesText.copyId} #${copy.copy_id}`}
+                                                    >
+                                                        {`${copiesText.copyId} #${copy.copy_id}`}
+                                                    </ListBox.Item>
+                                                ))}
+                                            </ListBox>
+                                        </Select.Popover>
+                                    </Select>
+                                )}
 
                                 <Select
                                     selectedKey={studentId}

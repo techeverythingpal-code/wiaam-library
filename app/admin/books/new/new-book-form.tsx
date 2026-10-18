@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, Input, Label, Button } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
 import type { Locale } from '@/lib/i18n';
+import type { CopiesText } from '@/lib/i18n-copies';
 
 interface NewBookText {
     title: string;
@@ -19,9 +20,18 @@ interface NewBookText {
     failedToAdd: string;
 }
 
-export default function NewBookForm({ locale, text }: { locale: Locale; text: NewBookText }) {
+export default function NewBookForm({
+    locale,
+    text,
+    copiesText,
+}: {
+    locale: Locale;
+    text: NewBookText;
+    copiesText: CopiesText;
+}) {
     const router = useRouter();
     const [bookId, setBookId] = useState('');
+    const [copyId, setCopyId] = useState('');
     const [bookName, setBookName] = useState('');
     const [auther, setAuther] = useState('');
     const [ageGroup, setAgeGroup] = useState('');
@@ -39,6 +49,7 @@ export default function NewBookForm({ locale, text }: { locale: Locale; text: Ne
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 bookId,
+                copyId: copyId.trim() || null,
                 bookName,
                 auther,
                 ageGroup: ageGroup || null,
@@ -79,6 +90,16 @@ export default function NewBookForm({ locale, text }: { locale: Locale; text: Ne
                                     onChange={(e) => setBookId(e.target.value)}
                                     required
                                 />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <Label htmlFor="copyId">{copiesText.firstCopyId}</Label>
+                                <Input
+                                    id="copyId"
+                                    type="number"
+                                    value={copyId}
+                                    onChange={(e) => setCopyId(e.target.value)}
+                                />
+                                <p className="text-xs text-gray-400">{copiesText.firstCopyHint}</p>
                             </div>
                             <div className="flex flex-col gap-1">
                                 <Label htmlFor="bookName">{text.bookTitle}</Label>

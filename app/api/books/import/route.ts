@@ -3,14 +3,16 @@ import { importHandler, templateResponse, type ImportConfig } from '@/lib/excel-
 
 const config: ImportConfig = {
     idKey: 'bookId',
+    secondaryIdKey: 'copyId',
     templateName: 'books-template.xlsx',
-    sampleRow: ['2001', 'The Little Prince', 'Antoine de Saint-Exupéry', '6-9', ''],
+    sampleRow: ['2001', 'The Little Prince', 'Antoine de Saint-Exupéry', '6-9', '', '5001'],
     columns: [
         { key: 'bookId', label: 'Book ID', aliases: ['book id', 'id', 'رقم الكتاب'], required: true },
         { key: 'bookName', label: 'Title', aliases: ['title', 'book name', 'العنوان', 'اسم الكتاب'], required: true },
         { key: 'auther', label: 'Author', aliases: ['author', 'auther', 'المؤلف'], required: true },
         { key: 'ageGroup', label: 'Age Group', aliases: ['age group', 'الفئة العمرية'], text: true },
         { key: 'bookCover', label: 'Cover URL', aliases: ['cover url', 'cover image url', 'cover', 'رابط صورة الغلاف'] },
+        { key: 'copyId', label: 'Copy ID', aliases: ['copy id', 'copy', 'رقم النسخة'] },
     ],
     async findExistingIds(ids) {
         const rows = await sql`
@@ -18,15 +20,30 @@ const config: ImportConfig = {
     `;
         return rows.map((r) => Number(r.book_id));
     },
+    async findExistingSecondaryIds(ids) {
+        const rows = await sql`
+      SELECT copy_id FROM book_copy WHERE copy_id = ANY(${ids}::int[])
+    `;
+        return rows.map((r) => Number(r.copy_id));
+    },
     async insertRows(rows) {
-        await sql.transaction(
-            rows.map(
+        // All books first, then their copies. Everything is saved together or not at all.
+        await sql.transaction([
+            ...rows.map(
                 (r) => sql`
           INSERT INTO book (book_id, book_name, auther, age_group, book_cover)
           VALUES (${Number(r.bookId)}, ${r.bookName}, ${r.auther}, ${r.ageGroup || null}, ${r.bookCover || null})
         `
-            )
-        );
+            ),
+            ...rows
+                .filter((r) => r.copyId !== '')
+                .map(
+                    (r) => sql`
+          INSERT INTO book_copy (copy_id, book_id)
+          VALUES (${Number(r.copyId)}, ${Number(r.bookId)})
+        `
+                ),
+        ]);
     },
 };
 

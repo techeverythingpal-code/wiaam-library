@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Card, Chip, Button, Input, Label, TextArea, Modal, useOverlayState } from '@heroui/react';
 import type { RequestText } from '@/lib/i18n-requests';
+import type { CopiesText } from '@/lib/i18n-copies';
 
 export interface BookCardBook {
     book_id: number;
@@ -15,11 +16,22 @@ export interface BookCardBook {
 interface BookCardProps {
     book: BookCardBook;
     isAvailable: boolean;
+    totalCopies: number;
+    availableCopies: number;
     byLabel: string;
     text: RequestText;
+    copiesText: CopiesText;
 }
 
-export default function BookCard({ book, isAvailable, byLabel, text }: BookCardProps) {
+export default function BookCard({
+    book,
+    isAvailable,
+    totalCopies,
+    availableCopies,
+    byLabel,
+    text,
+    copiesText,
+}: BookCardProps) {
     const state = useOverlayState();
 
     return (
@@ -65,7 +77,10 @@ export default function BookCard({ book, isAvailable, byLabel, text }: BookCardP
                             <BookDetails
                                 book={book}
                                 isAvailable={isAvailable}
+                                totalCopies={totalCopies}
+                                availableCopies={availableCopies}
                                 text={text}
+                                copiesText={copiesText}
                                 onClose={() => state.close()}
                             />
                         </Modal.Dialog>
@@ -79,12 +94,18 @@ export default function BookCard({ book, isAvailable, byLabel, text }: BookCardP
 function BookDetails({
     book,
     isAvailable,
+    totalCopies,
+    availableCopies,
     text,
+    copiesText,
     onClose,
 }: {
     book: BookCardBook;
     isAvailable: boolean;
+    totalCopies: number;
+    availableCopies: number;
     text: RequestText;
+    copiesText: CopiesText;
     onClose: () => void;
 }) {
     const [showForm, setShowForm] = useState(false);
@@ -95,6 +116,19 @@ function BookDetails({
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [sent, setSent] = useState(false);
+
+    // Book with copies: "2 of 3 copies available" / "All copies are borrowed".
+    // Book without copies: "Available" / "Currently borrowed" (as before).
+    const availabilityLabel =
+        totalCopies > 0
+            ? availableCopies > 0
+                ? copiesText.copiesAvailable
+                      .replace('{available}', String(availableCopies))
+                      .replace('{total}', String(totalCopies))
+                : copiesText.allCopiesBorrowed
+            : isAvailable
+              ? text.available
+              : text.currentlyBorrowed;
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -165,7 +199,7 @@ function BookDetails({
                                 variant="soft"
                                 color={isAvailable ? 'success' : 'warning'}
                             >
-                                {isAvailable ? text.available : text.currentlyBorrowed}
+                                {availabilityLabel}
                             </Chip>
                         </dd>
                     </div>
@@ -209,8 +243,6 @@ function BookDetails({
                                 required
                             />
                         </div>
-
-
 
                         <div className="flex flex-col gap-1">
                             <Label htmlFor="requesterPhone">{text.phone}</Label>

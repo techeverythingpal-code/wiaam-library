@@ -17,7 +17,7 @@ export async function POST(
     const { id } = await params;
     const requestId = Number(id);
 
-    let body: { borrowId?: unknown; studentId?: unknown };
+    let body: { borrowId?: unknown; studentId?: unknown; copyId?: unknown };
     try {
         body = await request.json();
     } catch {
@@ -27,11 +27,17 @@ export async function POST(
     const borrowId = Number(body.borrowId);
     const studentId = Number(body.studentId);
 
+    // The copy is optional here. The rules below decide if it is required.
+    const hasCopy =
+        body.copyId !== undefined && body.copyId !== null && String(body.copyId).trim() !== '';
+    const copyIdNum = hasCopy ? Number(body.copyId) : null;
+
     if (
         !Number.isInteger(requestId) ||
         !Number.isInteger(borrowId) ||
         borrowId <= 0 ||
-        !Number.isInteger(studentId)
+        !Number.isInteger(studentId) ||
+        (hasCopy && !Number.isInteger(copyIdNum))
     ) {
         return NextResponse.json({ error: 'Invalid request', code: 'invalid' }, { status: 400 });
     }
@@ -67,21 +73,60 @@ export async function POST(
             );
         }
 
-        const activeForBook = await sql`
-      SELECT borrow_id FROM borrow WHERE book_id = ${bookId} AND flag = true
+        const copies = await sql`
+      SELECT copy_id FROM book_copy WHERE book_id = ${bookId}
     `;
-        if (activeForBook.length > 0) {
-            return NextResponse.json(
-                { error: 'This book is already checked out', code: 'book_taken' },
-                { status: 409 }
-            );
+
+        if (copies.length > 0) {
+            // This book has copies: the librarian must choose a free one.
+            if (!hasCopy) {
+                return NextResponse.json(
+                    { error: 'Choose which copy is borrowed', code: 'copy_required' },
+                    { status: 400 }
+                );
+            }
+
+            if (!copies.some((c) => Number(c.copy_id) === copyIdNum)) {
+                return NextResponse.json(
+                    { error: 'This copy does not belong to this book', code: 'invalid' },
+                    { status: 400 }
+                );
+            }
+
+            const activeForCopy = await sql`
+        SELECT borrow_id FROM borrow WHERE copy_id = ${copyIdNum} AND flag = true
+      `;
+            if (activeForCopy.length > 0) {
+                return NextResponse.json(
+                    { error: 'This copy is already checked out', code: 'book_taken' },
+                    { status: 409 }
+                );
+            }
+        } else {
+            // No copies: the book is borrowed as a single item.
+            if (hasCopy) {
+                return NextResponse.json(
+                    { error: 'This book has no copies', code: 'invalid' },
+                    { status: 400 }
+                );
+            }
+
+            const activeForBook = await sql`
+        SELECT borrow_id FROM borrow WHERE book_id = ${bookId} AND flag = true
+      `;
+            if (activeForBook.length > 0) {
+                return NextResponse.json(
+                    { error: 'This book is already checked out', code: 'book_taken' },
+                    { status: 409 }
+                );
+            }
         }
 
         // Both statements succeed or both are rolled back.
         await sql.transaction([
             sql`
-        INSERT INTO borrow (borrow_id, book_id, student_id, date_borrow, date_back, flag)
-        VALUES (${borrowId}, ${bookId}, ${studentId}, NOW(), NULL, true)
+        INSERT INTO borrow (borrow_id, book_id, copy_id, student_id, date_borrow, date_back, flag)
+        VALUES (${borrowId}, ${bookId}, ${copyIdNum}, ${studentId}, NOW(), NULL, true)
       `,
             sql`
         UPDATE borrow_request SET status = 'done' WHERE request_id = ${requestId}

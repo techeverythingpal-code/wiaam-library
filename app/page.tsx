@@ -7,14 +7,23 @@ import BookCard from '@/components/BookCard';
 import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
 import { getRequestText } from '@/lib/i18n-requests';
+import { getCopiesText } from '@/lib/i18n-copies';
 
-interface Book {
+interface BookRow {
   book_id: number;
   book_name: string;
   auther: string;
   age_group: string | null;
   book_cover: string | null;
-  is_available: boolean;
+  total_copies: number;
+  available_copies: number;
+  book_borrowed: boolean;
+}
+
+// A book with copies is available if at least one copy is free.
+// A book without copies is available if it is not borrowed.
+function isBookAvailable(book: BookRow): boolean {
+  return book.total_copies > 0 ? book.available_copies > 0 : !book.book_borrowed;
 }
 
 async function getBookCount(query: string): Promise<number> {
@@ -32,36 +41,60 @@ async function getBookCount(query: string): Promise<number> {
   return rows[0].total;
 }
 
-async function getBooks(query: string, page: number): Promise<Book[]> {
+async function getBooks(query: string, page: number): Promise<BookRow[]> {
   const offset = (page - 1) * PAGE_SIZE;
 
   if (query.trim() === '') {
     return await sql`
       SELECT
         book_id, book_name, auther, age_group, book_cover,
-        NOT EXISTS (
+        (
+          SELECT COUNT(*)::int FROM book_copy c
+          WHERE c.book_id = book.book_id
+        ) AS total_copies,
+        (
+          SELECT COUNT(*)::int FROM book_copy c
+          WHERE c.book_id = book.book_id
+            AND NOT EXISTS (
+              SELECT 1 FROM borrow br
+              WHERE br.copy_id = c.copy_id AND br.flag = true
+            )
+        ) AS available_copies,
+        EXISTS (
           SELECT 1 FROM borrow br
           WHERE br.book_id = book.book_id AND br.flag = true
-        ) AS is_available
+        ) AS book_borrowed
       FROM book
       ORDER BY book_name ASC
       LIMIT ${PAGE_SIZE} OFFSET ${offset}
-    ` as Book[];
+    ` as BookRow[];
   }
 
   const likeQuery = `%${query}%`;
   return await sql`
     SELECT
       book_id, book_name, auther, age_group, book_cover,
-      NOT EXISTS (
+      (
+        SELECT COUNT(*)::int FROM book_copy c
+        WHERE c.book_id = book.book_id
+      ) AS total_copies,
+      (
+        SELECT COUNT(*)::int FROM book_copy c
+        WHERE c.book_id = book.book_id
+          AND NOT EXISTS (
+            SELECT 1 FROM borrow br
+            WHERE br.copy_id = c.copy_id AND br.flag = true
+          )
+      ) AS available_copies,
+      EXISTS (
         SELECT 1 FROM borrow br
         WHERE br.book_id = book.book_id AND br.flag = true
-      ) AS is_available
+      ) AS book_borrowed
     FROM book
     WHERE book_name ILIKE ${likeQuery} OR auther ILIKE ${likeQuery}
     ORDER BY book_name ASC
     LIMIT ${PAGE_SIZE} OFFSET ${offset}
-  ` as Book[];
+  ` as BookRow[];
 }
 
 export default async function Home({
@@ -80,6 +113,7 @@ export default async function Home({
   const books = await getBooks(query, currentPage);
   const { home, common } = t(locale);
   const requestText = getRequestText(locale);
+  const copiesText = getCopiesText(locale);
 
   return (
     <main className="min-h-screen">
@@ -114,9 +148,12 @@ export default async function Home({
                 <BookCard
                   key={book.book_id}
                   book={book}
-                  isAvailable={book.is_available}
+                  isAvailable={isBookAvailable(book)}
+                  totalCopies={book.total_copies}
+                  availableCopies={book.available_copies}
                   byLabel={common.by}
                   text={requestText}
+                  copiesText={copiesText}
                 />
               ))}
             </div>

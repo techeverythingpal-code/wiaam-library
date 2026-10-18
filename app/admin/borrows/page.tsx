@@ -6,9 +6,11 @@ import Pagination, { PAGE_SIZE } from '@/components/Pagination';
 import ReturnButton from './return-button';
 import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
+import { getCopiesText } from '@/lib/i18n-copies';
 import { formatDate } from '@/lib/format';
 interface Borrow {
     borrow_id: number;
+    copy_id: number | null;
     date_borrow: string;
     date_back: string | null;
     flag: boolean;
@@ -27,6 +29,7 @@ async function getBorrows(page: number): Promise<Borrow[]> {
     return await sql`
     SELECT
       b.borrow_id,
+      b.copy_id,
       b.date_borrow,
       b.date_back,
       b.flag,
@@ -54,6 +57,7 @@ export default async function BorrowsPage({
 
     const borrows = await getBorrows(currentPage);
     const fullText = t(locale); const text = { ...fullText.borrows, ...fullText.common };
+    const copiesText = getCopiesText(locale);
 
     return (
         <main className="min-h-screen">
@@ -92,6 +96,8 @@ export default async function BorrowsPage({
                                         <div>
                                             <p className="font-medium">
                                                 #{borrow.borrow_id} — {borrow.book_name}
+                                                {borrow.copy_id !== null &&
+                                                    ` · ${copiesText.copyId} #${borrow.copy_id}`}
                                             </p>
                                             <p className="text-sm text-gray-500">
                                                 {borrow.student_name} · {text.borrowed}{' '}
