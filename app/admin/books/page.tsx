@@ -12,6 +12,7 @@ interface Book {
     book_name: string;
     auther: string;
     age_group: string | null;
+    book_cover: string | null;
 }
 
 async function getBookCount(): Promise<number> {
@@ -23,7 +24,7 @@ async function getBooks(page: number): Promise<Book[]> {
     const offset = (page - 1) * PAGE_SIZE;
 
     return await sql`
-    SELECT book_id, book_name, auther, age_group
+    SELECT book_id, book_name, auther, age_group, book_cover
     FROM book
     ORDER BY book_id ASC
     LIMIT ${PAGE_SIZE} OFFSET ${offset}
@@ -78,8 +79,19 @@ export default async function AdminBooksPage({
                             {books.map((book) => (
                                 <Card
                                     key={book.book_id}
-                                    className="border-2 border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
+                                    className="border-2 border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
                                 >
+                                    {book.book_cover ? (
+                                        <img
+                                            src={book.book_cover}
+                                            alt={book.book_name}
+                                            className="w-full h-48 object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-48 bg-gray-50 flex items-center justify-center text-5xl">
+                                            📖
+                                        </div>
+                                    )}
                                     <Card.Content className="flex flex-col gap-3">
                                         <div>
                                             <p className="text-xs text-gray-400">#{book.book_id}</p>

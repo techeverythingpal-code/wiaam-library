@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, Input, Label, Button } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
+import CoverPreview from '@/components/CoverPreview';
 import type { Locale } from '@/lib/i18n';
 import type { CopiesText } from '@/lib/i18n-copies';
 
@@ -130,13 +131,18 @@ export default function NewBookForm({
                                     onChange={(e) => setAgeGroup(e.target.value)}
                                 />
                             </div>
-                            <div className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-2">
                                 <Label htmlFor="bookCover">{text.coverUrl}</Label>
                                 <Input
                                     id="bookCover"
                                     type="text"
                                     value={bookCover}
                                     onChange={(e) => setBookCover(e.target.value)}
+                                />
+                                <CoverPreview
+                                    url={bookCover}
+                                    alt={bookName || text.coverUrl}
+                                    locale={locale}
                                 />
                             </div>
                             {error && <p className="text-red-500 text-sm">{error}</p>}
