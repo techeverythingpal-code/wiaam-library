@@ -6,7 +6,7 @@ import type { Key } from '@heroui/react';
 import { Card, Input, Label, Button, Select, ListBox } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
 import type { Locale } from '@/lib/i18n';
-import type { CopiesText } from '@/lib/i18n-copies';
+import { copyLabel, type CopiesText } from '@/lib/i18n-copies';
 
 interface Student {
     student_id: number;
@@ -21,6 +21,7 @@ interface Book {
 interface FreeCopy {
     copy_id: number;
     book_id: number;
+    copy_number: number;
 }
 
 interface NewBorrowText {
@@ -178,15 +179,18 @@ export default function NewBorrowForm({
                                         </Select.Trigger>
                                         <Select.Popover>
                                             <ListBox>
-                                                {copiesOfBook.map((copy) => (
-                                                    <ListBox.Item
-                                                        key={copy.copy_id}
-                                                        id={copy.copy_id}
-                                                        textValue={`${copiesText.copyId} #${copy.copy_id}`}
-                                                    >
-                                                        {`${copiesText.copyId} #${copy.copy_id}`}
-                                                    </ListBox.Item>
-                                                ))}
+                                                {copiesOfBook.map((copy) => {
+                                                    const label = `${copiesText.copy} ${copyLabel(copy.book_id, copy.copy_number)}`;
+                                                    return (
+                                                        <ListBox.Item
+                                                            key={copy.copy_id}
+                                                            id={copy.copy_id}
+                                                            textValue={label}
+                                                        >
+                                                            {label}
+                                                        </ListBox.Item>
+                                                    );
+                                                })}
                                             </ListBox>
                                         </Select.Popover>
                                     </Select>

@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, Input, Label, Button } from '@heroui/react';
-import type { CopiesText } from '@/lib/i18n-copies';
+import { Card, Button } from '@heroui/react';
+import { copyLabel, type CopiesText } from '@/lib/i18n-copies';
 
 interface Copy {
     copy_id: number;
+    copy_number: number;
     borrowed: boolean;
 }
 
@@ -20,34 +21,34 @@ export default function CopiesManager({
     text: CopiesText;
 }) {
     const router = useRouter();
-    const [newCopyId, setNewCopyId] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    async function handleAdd(e: React.FormEvent) {
-        e.preventDefault();
+    // The system picks the next number, so there is nothing to type.
+    async function handleAdd() {
         setError('');
         setLoading(true);
 
         const res = await fetch(`/api/books/${bookId}/copies`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ copyId: newCopyId }),
+            body: JSON.stringify({ count: 1 }),
         });
 
         setLoading(false);
 
         if (res.ok) {
-            setNewCopyId('');
             router.refresh();
         } else {
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
             setError(data.error ?? text.copyFailed);
         }
     }
 
-    async function handleDelete(copyId: number) {
-        if (!confirm(text.confirmDeleteCopy.replace('{id}', String(copyId)))) {
+    async function handleDelete(copy: Copy) {
+        const label = copyLabel(bookId, copy.copy_number);
+
+        if (!confirm(text.confirmDeleteCopy.replace('{label}', label))) {
             return;
         }
 
@@ -57,7 +58,7 @@ export default function CopiesManager({
         const res = await fetch(`/api/books/${bookId}/copies`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ copyId }),
+            body: JSON.stringify({ copyId: copy.copy_id }),
         });
 
         setLoading(false);
@@ -65,7 +66,7 @@ export default function CopiesManager({
         if (res.ok) {
             router.refresh();
         } else {
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
             setError(data.error ?? text.copyFailed);
         }
     }
@@ -87,8 +88,8 @@ export default function CopiesManager({
                                     className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 px-3 py-2"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <span className="font-medium">
-                                            {text.copyId} #{copy.copy_id}
+                                        <span className="font-medium" dir="ltr">
+                                            {text.copy} {copyLabel(bookId, copy.copy_number)}
                                         </span>
                                         <span
                                             className={
@@ -104,7 +105,7 @@ export default function CopiesManager({
                                         type="button"
                                         variant="outline"
                                         isDisabled={loading || copy.borrowed}
-                                        onClick={() => handleDelete(copy.copy_id)}
+                                        onClick={() => handleDelete(copy)}
                                     >
                                         {text.deleteCopy}
                                     </Button>
@@ -113,21 +114,9 @@ export default function CopiesManager({
                         </ul>
                     )}
 
-                    <form onSubmit={handleAdd} className="flex flex-col gap-2">
-                        <Label htmlFor="newCopyId">{text.copyId}</Label>
-                        <div className="flex gap-2">
-                            <Input
-                                id="newCopyId"
-                                type="number"
-                                value={newCopyId}
-                                onChange={(e) => setNewCopyId(e.target.value)}
-                                required
-                            />
-                            <Button type="submit" isDisabled={loading}>
-                                {loading ? text.addingCopy : text.addCopy}
-                            </Button>
-                        </div>
-                    </form>
+                    <Button type="button" isDisabled={loading} onClick={handleAdd}>
+                        {loading ? text.addingCopy : text.addCopy}
+                    </Button>
 
                     {error && <p className="text-red-500 text-sm">{error}</p>}
                 </div>

@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import { sql } from '@/lib/db';
 import { SESSION_COOKIE, verifySession } from '@/lib/session';
 
+const MAX_COPIES_AT_ONCE = 50;
+
 export async function POST(request: Request) {
     const cookieStore = await cookies();
     const sessionUser = await verifySession(cookieStore.get(SESSION_COOKIE)?.value);
@@ -11,7 +13,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const { bookId, copyId, bookName, auther, ageGroup, bookCover } = await request.json();
+    const { bookId, copyCount, bookName, auther, ageGroup, bookCover } = await request.json();
 
     if (!bookId || !bookName || !auther) {
         return NextResponse.json(
@@ -29,13 +31,14 @@ export async function POST(request: Request) {
         );
     }
 
-    // The first copy is optional. Empty means "no copy yet".
-    const hasCopy = copyId !== undefined && copyId !== null && String(copyId).trim() !== '';
-    const copyIdNum = hasCopy ? Number(copyId) : null;
+    // Number of copies is optional. Empty means "no copies yet".
+    const hasCount =
+        copyCount !== undefined && copyCount !== null && String(copyCount).trim() !== '';
+    const count = hasCount ? Number(copyCount) : 0;
 
-    if (hasCopy && (!Number.isInteger(copyIdNum) || (copyIdNum as number) <= 0)) {
+    if (!Number.isInteger(count) || count < 0 || count > MAX_COPIES_AT_ONCE) {
         return NextResponse.json(
-            { error: 'Copy ID must be a positive whole number' },
+            { error: `Number of copies must be between 0 and ${MAX_COPIES_AT_ONCE}` },
             { status: 400 }
         );
     }
@@ -52,35 +55,19 @@ export async function POST(request: Request) {
             );
         }
 
-        if (hasCopy) {
-            const existingCopy = await sql`
-        SELECT copy_id FROM book_copy WHERE copy_id = ${copyIdNum}
-      `;
-
-            if (existingCopy.length > 0) {
-                return NextResponse.json(
-                    { error: `Copy ID ${copyIdNum} already exists` },
-                    { status: 409 }
-                );
-            }
-
-            // Both inserts succeed together, or neither is saved.
-            await sql.transaction([
-                sql`
-          INSERT INTO book (book_id, book_name, auther, age_group, book_cover)
-          VALUES (${bookIdNum}, ${bookName}, ${auther}, ${ageGroup}, ${bookCover})
-        `,
-                sql`
-          INSERT INTO book_copy (copy_id, book_id)
-          VALUES (${copyIdNum}, ${bookIdNum})
-        `,
-            ]);
-        } else {
-            await sql`
-        INSERT INTO book (book_id, book_name, auther, age_group, book_cover)
-        VALUES (${bookIdNum}, ${bookName}, ${auther}, ${ageGroup}, ${bookCover})
-      `;
-        }
+        // The book and its copies are saved together, or not at all.
+        // Copies are numbered 1..count, and the book remembers the next number.
+        await sql.transaction([
+            sql`
+        INSERT INTO book (book_id, book_name, auther, age_group, book_cover, next_copy_number)
+        VALUES (${bookIdNum}, ${bookName}, ${auther}, ${ageGroup}, ${bookCover}, ${count + 1})
+      `,
+            sql`
+        INSERT INTO book_copy (book_id, copy_number)
+        SELECT ${bookIdNum}::int, g
+        FROM generate_series(1, ${count}::int) AS g
+      `,
+        ]);
 
         return NextResponse.json({ success: true });
     } catch (err) {

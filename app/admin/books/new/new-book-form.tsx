@@ -32,7 +32,7 @@ export default function NewBookForm({
 }) {
     const router = useRouter();
     const [bookId, setBookId] = useState('');
-    const [copyId, setCopyId] = useState('');
+    const [copyCount, setCopyCount] = useState('');
     const [bookName, setBookName] = useState('');
     const [auther, setAuther] = useState('');
     const [ageGroup, setAgeGroup] = useState('');
@@ -50,7 +50,7 @@ export default function NewBookForm({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 bookId,
-                copyId: copyId.trim() || null,
+                copyCount: copyCount.trim() || null,
                 bookName,
                 auther,
                 ageGroup: ageGroup || null,
@@ -93,14 +93,16 @@ export default function NewBookForm({
                                 />
                             </div>
                             <div className="flex flex-col gap-1">
-                                <Label htmlFor="copyId">{copiesText.firstCopyId}</Label>
+                                <Label htmlFor="copyCount">{copiesText.copyCount}</Label>
                                 <Input
-                                    id="copyId"
+                                    id="copyCount"
                                     type="number"
-                                    value={copyId}
-                                    onChange={(e) => setCopyId(e.target.value)}
+                                    min={0}
+                                    max={50}
+                                    value={copyCount}
+                                    onChange={(e) => setCopyCount(e.target.value)}
                                 />
-                                <p className="text-xs text-gray-400">{copiesText.firstCopyHint}</p>
+                                <p className="text-xs text-gray-400">{copiesText.copyCountHint}</p>
                             </div>
                             <div className="flex flex-col gap-1">
                                 <Label htmlFor="bookName">{text.bookTitle}</Label>

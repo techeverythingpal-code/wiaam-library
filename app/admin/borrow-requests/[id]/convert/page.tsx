@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { sql } from '@/lib/db';
 import { getLocale } from '@/lib/i18n-server';
 import { getRequestText } from '@/lib/i18n-requests';
-import { getCopiesText } from '@/lib/i18n-copies';
+import { getCopiesText, copyLabel } from '@/lib/i18n-copies';
 import ConvertForm from './convert-form';
 
 interface RequestRow {
@@ -24,6 +24,7 @@ interface Student {
 
 interface FreeCopy {
     copy_id: number;
+    copy_number: number;
 }
 
 // is_borrowed means "nothing can be lent right now":
@@ -70,14 +71,14 @@ async function getStudents(): Promise<Student[]> {
 
 async function getFreeCopies(bookId: number): Promise<FreeCopy[]> {
     return await sql`
-    SELECT c.copy_id
+    SELECT c.copy_id, c.copy_number
     FROM book_copy c
     WHERE c.book_id = ${bookId}
       AND NOT EXISTS (
         SELECT 1 FROM borrow b
         WHERE b.copy_id = c.copy_id AND b.flag = true
       )
-    ORDER BY c.copy_id ASC
+    ORDER BY c.copy_number ASC
   ` as FreeCopy[];
 }
 
@@ -106,7 +107,13 @@ export default async function ConvertRequestPage({
 
     if (!req) notFound();
 
-    const copies = await getFreeCopies(req.book_id);
+    const freeCopies = await getFreeCopies(req.book_id);
+
+    // The form only needs the internal id and the label to show ("7-2").
+    const copies = freeCopies.map((c) => ({
+        copy_id: c.copy_id,
+        label: copyLabel(req.book_id, c.copy_number),
+    }));
 
     const requestedStudentId = req.student_id;
     const matchedStudentId =

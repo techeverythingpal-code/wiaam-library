@@ -6,11 +6,12 @@ import Pagination, { PAGE_SIZE } from '@/components/Pagination';
 import ReturnButton from './return-button';
 import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
-import { getCopiesText } from '@/lib/i18n-copies';
+import { getCopiesText, copyLabel } from '@/lib/i18n-copies';
 import { formatDate } from '@/lib/format';
 interface Borrow {
     borrow_id: number;
-    copy_id: number | null;
+    book_id: number;
+    copy_number: number | null;
     date_borrow: string;
     date_back: string | null;
     flag: boolean;
@@ -29,7 +30,8 @@ async function getBorrows(page: number): Promise<Borrow[]> {
     return await sql`
     SELECT
       b.borrow_id,
-      b.copy_id,
+      b.book_id,
+      c.copy_number,
       b.date_borrow,
       b.date_back,
       b.flag,
@@ -38,6 +40,7 @@ async function getBorrows(page: number): Promise<Borrow[]> {
     FROM borrow b
     JOIN book bk ON bk.book_id = b.book_id
     JOIN student s ON s.student_id = b.student_id
+    LEFT JOIN book_copy c ON c.copy_id = b.copy_id
     ORDER BY b.date_borrow DESC, b.borrow_id DESC
     LIMIT ${PAGE_SIZE} OFFSET ${offset}
   ` as Borrow[];
@@ -96,8 +99,11 @@ export default async function BorrowsPage({
                                         <div>
                                             <p className="font-medium">
                                                 #{borrow.borrow_id} — {borrow.book_name}
-                                                {borrow.copy_id !== null &&
-                                                    ` · ${copiesText.copyId} #${borrow.copy_id}`}
+                                                {borrow.copy_number !== null && (
+                                                    <span dir="ltr">
+                                                        {` · ${copiesText.copy} ${copyLabel(borrow.book_id, borrow.copy_number)}`}
+                                                    </span>
+                                                )}
                                             </p>
                                             <p className="text-sm text-gray-500">
                                                 {borrow.student_name} · {text.borrowed}{' '}

@@ -16,6 +16,7 @@ interface Book {
 
 interface Copy {
     copy_id: number;
+    copy_number: number;
     borrowed: boolean;
 }
 
@@ -32,13 +33,14 @@ async function getCopies(id: string): Promise<Copy[]> {
     const rows = await sql`
     SELECT
       c.copy_id,
+      c.copy_number,
       EXISTS (
         SELECT 1 FROM borrow b
         WHERE b.copy_id = c.copy_id AND b.flag = true
       ) AS borrowed
     FROM book_copy c
     WHERE c.book_id = ${id}
-    ORDER BY c.copy_id ASC
+    ORDER BY c.copy_number ASC
   `;
     return rows as Copy[];
 }

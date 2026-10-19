@@ -17,6 +17,7 @@ interface Student {
 
 interface FreeCopy {
     copy_id: number;
+    label: string; // for example "7-2"
 }
 
 interface ConvertFormProps {
@@ -207,9 +208,9 @@ export default function ConvertForm({
                                                     <ListBox.Item
                                                         key={copy.copy_id}
                                                         id={copy.copy_id}
-                                                        textValue={`${copiesText.copyId} #${copy.copy_id}`}
+                                                        textValue={`${copiesText.copy} ${copy.label}`}
                                                     >
-                                                        {`${copiesText.copyId} #${copy.copy_id}`}
+                                                        {`${copiesText.copy} ${copy.label}`}
                                                     </ListBox.Item>
                                                 ))}
                                             </ListBox>

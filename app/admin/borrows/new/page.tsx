@@ -17,6 +17,7 @@ interface Book {
 interface FreeCopy {
     copy_id: number;
     book_id: number;
+    copy_number: number;
 }
 
 async function getAvailableStudents(): Promise<Student[]> {
@@ -56,13 +57,13 @@ async function getAvailableBooks(): Promise<Book[]> {
 // Only the copies that are free right now.
 async function getFreeCopies(): Promise<FreeCopy[]> {
     return await sql`
-    SELECT c.copy_id, c.book_id
+    SELECT c.copy_id, c.book_id, c.copy_number
     FROM book_copy c
     WHERE NOT EXISTS (
       SELECT 1 FROM borrow b
       WHERE b.copy_id = c.copy_id AND b.flag = true
     )
-    ORDER BY c.copy_id ASC
+    ORDER BY c.book_id ASC, c.copy_number ASC
   ` as FreeCopy[];
 }
 
