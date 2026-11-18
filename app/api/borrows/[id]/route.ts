@@ -1,35 +1,38 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { sql } from '@/lib/db';
-import { SESSION_COOKIE, verifySession } from '@/lib/session';
+import { apiError, isAdmin, parseId, serverError } from '@/lib/api';
 
+// Mark a borrow as returned.
 export async function PUT(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const cookieStore = await cookies();
-    const sessionUser = await verifySession(cookieStore.get(SESSION_COOKIE)?.value);
-
-    if (!sessionUser) {
-        return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (!(await isAdmin())) {
+        return apiError('notAuthenticated', 401);
     }
 
-    const { id } = await params;
+    const borrowId = parseId((await params).id);
+    if (borrowId === null) {
+        return apiError('borrowNotActive', 404);
+    }
 
     try {
-        await sql`
+        const returned = await sql`
       UPDATE borrow
       SET flag = false,
           date_back = NOW()
-      WHERE borrow_id = ${id} AND flag = true
+      WHERE borrow_id = ${borrowId} AND flag = true
+      RETURNING borrow_id
     `;
+
+        // Nothing changed: the borrow does not exist, or it was already returned
+        // (for example, the button was clicked in two tabs).
+        if (returned.length === 0) {
+            return apiError('borrowNotActive', 409);
+        }
 
         return NextResponse.json({ success: true });
     } catch (err) {
-        console.error('Failed to mark borrow returned:', err);
-        return NextResponse.json(
-            { error: err instanceof Error ? err.message : 'Failed to mark borrow returned' },
-            { status: 500 }
-        );
+        return serverError('Failed to mark borrow returned', err);
     }
 }

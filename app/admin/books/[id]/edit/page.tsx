@@ -5,6 +5,7 @@ import CopiesManager from './copies-manager';
 import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
 import { getCopiesText } from '@/lib/i18n-copies';
+import { parseId } from '@/lib/api';
 
 interface Book {
     book_id: number;
@@ -20,7 +21,7 @@ interface Copy {
     borrowed: boolean;
 }
 
-async function getBook(id: string): Promise<Book | undefined> {
+async function getBook(id: number): Promise<Book | undefined> {
     const rows = await sql`
     SELECT book_id, book_name, auther, age_group, book_cover
     FROM book
@@ -29,7 +30,7 @@ async function getBook(id: string): Promise<Book | undefined> {
     return rows[0] as Book | undefined;
 }
 
-async function getCopies(id: string): Promise<Copy[]> {
+async function getCopies(id: number): Promise<Copy[]> {
     const rows = await sql`
     SELECT
       c.copy_id,
@@ -50,10 +51,15 @@ export default async function EditBookPage({
 }: {
     params: Promise<{ id: string }>;
 }) {
-    const { id } = await params;
+    // "/admin/books/abc/edit" -> the normal "not found" page (not a database error).
+    const bookId = parseId((await params).id);
+    if (bookId === null) {
+        notFound();
+    }
+
     const [book, copies, locale] = await Promise.all([
-        getBook(id),
-        getCopies(id),
+        getBook(bookId),
+        getCopies(bookId),
         getLocale(),
     ]);
 

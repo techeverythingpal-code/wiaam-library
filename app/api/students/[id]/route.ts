@@ -1,48 +1,54 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { sql } from '@/lib/db';
-import { SESSION_COOKIE, verifySession } from '@/lib/session';
+import { apiError, isAdmin, parseId, readJson, serverError } from '@/lib/api';
 
-async function checkAuth() {
-    const cookieStore = await cookies();
-    return await verifySession(cookieStore.get(SESSION_COOKIE)?.value);
+// Turns "" / null / undefined into null, and trims text.
+function optionalText(value: unknown): string | null {
+    if (value === undefined || value === null) return null;
+    const text = String(value).trim();
+    return text === '' ? null : text;
 }
 
 export async function PUT(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const sessionUser = await checkAuth();
-    if (!sessionUser) {
-        return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (!(await isAdmin())) {
+        return apiError('notAuthenticated', 401);
     }
 
-    const { id } = await params;
-    const { studentName, grade, phone } = await request.json();
+    const studentId = parseId((await params).id);
+    if (studentId === null) {
+        return apiError('studentNotFound', 404);
+    }
+
+    const body = await readJson(request);
+    const studentName = optionalText(body.studentName);
+    const grade = optionalText(body.grade);
+    const phone = optionalText(body.phone);
 
     if (!studentName) {
-        return NextResponse.json(
-            { error: 'Student name is required' },
-            { status: 400 }
-        );
+        return apiError('studentNameRequired', 400);
     }
 
     try {
-        await sql`
+        const updated = await sql`
       UPDATE student
       SET student_name = ${studentName},
           grade = ${grade},
           phone = ${phone}
-      WHERE student_id = ${id}
+      WHERE student_id = ${studentId}
+      RETURNING student_id
     `;
+
+        // Nothing was updated: the student does not exist (maybe they were just deleted).
+        if (updated.length === 0) {
+            return apiError('studentNotFound', 404);
+        }
 
         return NextResponse.json({ success: true });
     } catch (err) {
-        console.error('Failed to update student:', err);
-        return NextResponse.json(
-            { error: err instanceof Error ? err.message : 'Failed to update student' },
-            { status: 500 }
-        );
+        return serverError('Failed to update student', err);
     }
 }
 
@@ -50,45 +56,43 @@ export async function DELETE(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const sessionUser = await checkAuth();
-    if (!sessionUser) {
-        return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (!(await isAdmin())) {
+        return apiError('notAuthenticated', 401);
     }
 
-    const { id } = await params;
+    const studentId = parseId((await params).id);
+    if (studentId === null) {
+        return apiError('studentNotFound', 404);
+    }
 
     try {
         const activeBorrow = await sql`
-      SELECT borrow_id FROM borrow WHERE student_id = ${id} AND flag = true
+      SELECT borrow_id FROM borrow WHERE student_id = ${studentId} AND flag = true
     `;
 
         if (activeBorrow.length > 0) {
-            return NextResponse.json(
-                { error: 'Cannot delete a student who currently has a book borrowed' },
-                { status: 409 }
-            );
+            return apiError('studentBorrowedNow', 409);
         }
 
         // Cannot delete a student who borrowed before (the loan history must stay correct).
         const history = await sql`
-      SELECT borrow_id FROM borrow WHERE student_id = ${id} LIMIT 1
+      SELECT borrow_id FROM borrow WHERE student_id = ${studentId} LIMIT 1
     `;
 
         if (history.length > 0) {
-            return NextResponse.json(
-                { error: 'Cannot delete a student who has borrow history' },
-                { status: 409 }
-            );
+            return apiError('studentHasHistory', 409);
         }
 
-        await sql`DELETE FROM student WHERE student_id = ${id}`;
+        const deleted = await sql`
+      DELETE FROM student WHERE student_id = ${studentId} RETURNING student_id
+    `;
+
+        if (deleted.length === 0) {
+            return apiError('studentNotFound', 404);
+        }
 
         return NextResponse.json({ success: true });
     } catch (err) {
-        console.error('Failed to delete student:', err);
-        return NextResponse.json(
-            { error: err instanceof Error ? err.message : 'Failed to delete student' },
-            { status: 500 }
-        );
+        return serverError('Failed to delete student', err);
     }
 }

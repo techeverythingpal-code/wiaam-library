@@ -1,23 +1,32 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { sql } from '@/lib/db';
-import { SESSION_COOKIE, verifySession } from '@/lib/session';
+import { apiError, isAdmin, parseId, readJson, serverError } from '@/lib/api';
+import { isUniqueViolation } from '@/lib/borrow';
+
+// Turns "" / null / undefined into null, and trims text.
+function optionalText(value: unknown): string | null {
+    if (value === undefined || value === null) return null;
+    const text = String(value).trim();
+    return text === '' ? null : text;
+}
 
 export async function POST(request: Request) {
-    const cookieStore = await cookies();
-    const sessionUser = await verifySession(cookieStore.get(SESSION_COOKIE)?.value);
-
-    if (!sessionUser) {
-        return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (!(await isAdmin())) {
+        return apiError('notAuthenticated', 401);
     }
 
-    const { studentId, studentName, grade, phone } = await request.json();
+    const body = await readJson(request);
+    const studentName = optionalText(body.studentName);
+    const grade = optionalText(body.grade);
+    const phone = optionalText(body.phone);
 
-    if (!studentId || !studentName) {
-        return NextResponse.json(
-            { error: 'Student ID and name are required' },
-            { status: 400 }
-        );
+    if (!body.studentId || !studentName) {
+        return apiError('studentFieldsRequired', 400);
+    }
+
+    const studentId = parseId(body.studentId);
+    if (studentId === null) {
+        return apiError('studentIdInvalid', 400);
     }
 
     try {
@@ -26,10 +35,7 @@ export async function POST(request: Request) {
     `;
 
         if (existing.length > 0) {
-            return NextResponse.json(
-                { error: `Student ID ${studentId} already exists` },
-                { status: 409 }
-            );
+            return apiError('studentIdExists', 409, { id: studentId });
         }
 
         await sql`
@@ -39,10 +45,10 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true });
     } catch (err) {
-        console.error('Failed to add student:', err);
-        return NextResponse.json(
-            { error: err instanceof Error ? err.message : 'Failed to add student' },
-            { status: 500 }
-        );
+        // Someone saved the same Student ID a moment earlier.
+        if (isUniqueViolation(err)) {
+            return apiError('studentIdExists', 409, { id: studentId });
+        }
+        return serverError('Failed to add student', err);
     }
 }

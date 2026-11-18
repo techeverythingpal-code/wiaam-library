@@ -1,73 +1,67 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { sql } from '@/lib/db';
-import { SESSION_COOKIE, verifySession } from '@/lib/session';
+import { apiError, isAdmin, parseId, serverError } from '@/lib/api';
 
-async function isAuthenticated() {
-    const cookieStore = await cookies();
-    const sessionUser = await verifySession(cookieStore.get(SESSION_COOKIE)?.value);
-    return Boolean(sessionUser);
-}
-
+// Mark a pending request as done (without creating a borrow).
 export async function PUT(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    if (!(await isAuthenticated())) {
-        return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (!(await isAdmin())) {
+        return apiError('notAuthenticated', 401);
     }
 
-    const { id } = await params;
-    const requestId = Number(id);
-
-    if (!Number.isInteger(requestId)) {
-        return NextResponse.json({ error: 'Invalid request ID' }, { status: 400 });
+    const requestId = parseId((await params).id);
+    if (requestId === null) {
+        return apiError('requestNotFound', 404);
     }
 
     try {
-        await sql`
+        const updated = await sql`
       UPDATE borrow_request
       SET status = 'done'
-      WHERE request_id = ${requestId}
+      WHERE request_id = ${requestId} AND status = 'pending'
+      RETURNING request_id
     `;
+
+        // Nothing changed: the request does not exist, or it was already handled.
+        if (updated.length === 0) {
+            return apiError('requestNotPending', 409);
+        }
 
         return NextResponse.json({ success: true });
     } catch (err) {
-        console.error('Failed to update borrow request:', err);
-        return NextResponse.json(
-            { error: err instanceof Error ? err.message : 'Failed to update request' },
-            { status: 500 }
-        );
+        return serverError('Failed to update borrow request', err);
     }
 }
 
+// Delete a request (pending or done).
 export async function DELETE(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    if (!(await isAuthenticated())) {
-        return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (!(await isAdmin())) {
+        return apiError('notAuthenticated', 401);
     }
 
-    const { id } = await params;
-    const requestId = Number(id);
-
-    if (!Number.isInteger(requestId)) {
-        return NextResponse.json({ error: 'Invalid request ID' }, { status: 400 });
+    const requestId = parseId((await params).id);
+    if (requestId === null) {
+        return apiError('requestNotFound', 404);
     }
 
     try {
-        await sql`
+        const deleted = await sql`
       DELETE FROM borrow_request
       WHERE request_id = ${requestId}
+      RETURNING request_id
     `;
+
+        if (deleted.length === 0) {
+            return apiError('requestNotFound', 404);
+        }
 
         return NextResponse.json({ success: true });
     } catch (err) {
-        console.error('Failed to delete borrow request:', err);
-        return NextResponse.json(
-            { error: err instanceof Error ? err.message : 'Failed to delete request' },
-            { status: 500 }
-        );
+        return serverError('Failed to delete borrow request', err);
     }
 }

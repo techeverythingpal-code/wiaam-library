@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import EditStudentForm from './edit-form';
 import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
+import { parseId } from '@/lib/api';
 
 interface Student {
     student_id: number;
@@ -11,7 +12,7 @@ interface Student {
     phone: string | null;
 }
 
-async function getStudent(id: string): Promise<Student | undefined> {
+async function getStudent(id: number): Promise<Student | undefined> {
     const rows = await sql`
     SELECT student_id, student_name, grade, phone
     FROM student
@@ -25,8 +26,13 @@ export default async function EditStudentPage({
 }: {
     params: Promise<{ id: string }>;
 }) {
-    const { id } = await params;
-    const [student, locale] = await Promise.all([getStudent(id), getLocale()]);
+    // "/admin/students/abc/edit" -> the normal "not found" page (not a database error).
+    const studentId = parseId((await params).id);
+    if (studentId === null) {
+        notFound();
+    }
+
+    const [student, locale] = await Promise.all([getStudent(studentId), getLocale()]);
 
     if (!student) {
         notFound();
