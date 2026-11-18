@@ -17,22 +17,12 @@ interface BookRow {
   book_cover: string | null;
   total_copies: number;
   available_copies: number;
-  book_borrowed: boolean;
+  is_available: boolean;
 }
 
-// A book with copies is available if at least one copy is free.
-// A book without copies is available if it is not borrowed.
-function isBookAvailable(book: BookRow): boolean {
-  return book.total_copies > 0 ? book.available_copies > 0 : !book.book_borrowed;
-}
-
+// An empty search ('') matches every book, so one query covers both cases.
 async function getBookCount(query: string): Promise<number> {
-  if (query.trim() === '') {
-    const rows = await sql`SELECT COUNT(*)::int AS total FROM book` as { total: number }[];
-    return rows[0].total;
-  }
-
-  const likeQuery = `%${query}%`;
+  const likeQuery = `%${query.trim()}%`;
   const rows = await sql`
     SELECT COUNT(*)::int AS total
     FROM book
@@ -41,58 +31,19 @@ async function getBookCount(query: string): Promise<number> {
   return rows[0].total;
 }
 
+// Availability comes from the book_availability view (migrations/004).
 async function getBooks(query: string, page: number): Promise<BookRow[]> {
   const offset = (page - 1) * PAGE_SIZE;
+  const likeQuery = `%${query.trim()}%`;
 
-  if (query.trim() === '') {
-    return await sql`
-      SELECT
-        book_id, book_name, auther, age_group, book_cover,
-        (
-          SELECT COUNT(*)::int FROM book_copy c
-          WHERE c.book_id = book.book_id
-        ) AS total_copies,
-        (
-          SELECT COUNT(*)::int FROM book_copy c
-          WHERE c.book_id = book.book_id
-            AND NOT EXISTS (
-              SELECT 1 FROM borrow br
-              WHERE br.copy_id = c.copy_id AND br.flag = true
-            )
-        ) AS available_copies,
-        EXISTS (
-          SELECT 1 FROM borrow br
-          WHERE br.book_id = book.book_id AND br.flag = true
-        ) AS book_borrowed
-      FROM book
-      ORDER BY book_name ASC
-      LIMIT ${PAGE_SIZE} OFFSET ${offset}
-    ` as BookRow[];
-  }
-
-  const likeQuery = `%${query}%`;
   return await sql`
     SELECT
-      book_id, book_name, auther, age_group, book_cover,
-      (
-        SELECT COUNT(*)::int FROM book_copy c
-        WHERE c.book_id = book.book_id
-      ) AS total_copies,
-      (
-        SELECT COUNT(*)::int FROM book_copy c
-        WHERE c.book_id = book.book_id
-          AND NOT EXISTS (
-            SELECT 1 FROM borrow br
-            WHERE br.copy_id = c.copy_id AND br.flag = true
-          )
-      ) AS available_copies,
-      EXISTS (
-        SELECT 1 FROM borrow br
-        WHERE br.book_id = book.book_id AND br.flag = true
-      ) AS book_borrowed
-    FROM book
-    WHERE book_name ILIKE ${likeQuery} OR auther ILIKE ${likeQuery}
-    ORDER BY book_name ASC
+      bk.book_id, bk.book_name, bk.auther, bk.age_group, bk.book_cover,
+      a.total_copies, a.available_copies, a.is_available
+    FROM book bk
+    JOIN book_availability a ON a.book_id = bk.book_id
+    WHERE bk.book_name ILIKE ${likeQuery} OR bk.auther ILIKE ${likeQuery}
+    ORDER BY bk.book_name ASC
     LIMIT ${PAGE_SIZE} OFFSET ${offset}
   ` as BookRow[];
 }
@@ -148,7 +99,7 @@ export default async function Home({
                 <BookCard
                   key={book.book_id}
                   book={book}
-                  isAvailable={isBookAvailable(book)}
+                  isAvailable={book.is_available}
                   totalCopies={book.total_copies}
                   availableCopies={book.available_copies}
                   byLabel={common.by}

@@ -28,42 +28,23 @@ async function getAvailableStudents(): Promise<Student[]> {
   ` as Student[];
 }
 
-// A book can be borrowed when:
-//  - it has copies and at least one copy is free, OR
-//  - it has no copies and it is not currently borrowed.
+// Books that can be lent right now (rule in the book_availability view, migrations/004).
 async function getAvailableBooks(): Promise<Book[]> {
     return await sql`
     SELECT bk.book_id, bk.book_name
     FROM book bk
-    WHERE EXISTS (
-        SELECT 1 FROM book_copy c
-        WHERE c.book_id = bk.book_id
-          AND NOT EXISTS (
-            SELECT 1 FROM borrow b
-            WHERE b.copy_id = c.copy_id AND b.flag = true
-          )
-      )
-      OR (
-        NOT EXISTS (SELECT 1 FROM book_copy c WHERE c.book_id = bk.book_id)
-        AND NOT EXISTS (
-          SELECT 1 FROM borrow b
-          WHERE b.book_id = bk.book_id AND b.flag = true
-        )
-      )
+    JOIN book_availability a ON a.book_id = bk.book_id
+    WHERE a.is_available
     ORDER BY bk.book_name ASC
   ` as Book[];
 }
 
-// Only the copies that are free right now.
+// Only the copies that are free right now (free_copy view, migrations/004).
 async function getFreeCopies(): Promise<FreeCopy[]> {
     return await sql`
-    SELECT c.copy_id, c.book_id, c.copy_number
-    FROM book_copy c
-    WHERE NOT EXISTS (
-      SELECT 1 FROM borrow b
-      WHERE b.copy_id = c.copy_id AND b.flag = true
-    )
-    ORDER BY c.book_id ASC, c.copy_number ASC
+    SELECT copy_id, book_id, copy_number
+    FROM free_copy
+    ORDER BY book_id ASC, copy_number ASC
   ` as FreeCopy[];
 }
 
