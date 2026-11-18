@@ -38,6 +38,7 @@ CREATE INDEX IF NOT EXISTS borrow_copy_id_idx ON borrow (copy_id);
 CREATE TABLE IF NOT EXISTS borrow_request (
     request_id     SERIAL PRIMARY KEY,
     book_id        INTEGER NOT NULL REFERENCES book(book_id) ON DELETE CASCADE,
+    student_id     INTEGER,      -- the student ID the visitor typed (may not match a real student)
     requester_name VARCHAR(100) NOT NULL,
     phone          VARCHAR(20)  NOT NULL,
     note           VARCHAR(500),
@@ -46,3 +47,43 @@ CREATE TABLE IF NOT EXISTS borrow_request (
 );
 
 CREATE INDEX IF NOT EXISTS borrow_request_status_idx ON borrow_request (status);
+
+-- Only one ACTIVE borrow per copy, and per book without copies (migrations/003).
+CREATE UNIQUE INDEX IF NOT EXISTS borrow_one_active_per_copy
+    ON borrow (copy_id)
+    WHERE flag = true AND copy_id IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS borrow_one_active_per_book_without_copy
+    ON borrow (book_id)
+    WHERE flag = true AND copy_id IS NULL;
+
+-- Availability views (migrations/004). The pages read these instead of repeating the rule.
+-- free_copy         = copies with no active borrow
+-- book_availability = per book: total_copies, available_copies, is_available
+CREATE OR REPLACE VIEW free_copy AS
+SELECT c.copy_id, c.book_id, c.copy_number
+FROM book_copy c
+WHERE NOT EXISTS (
+    SELECT 1 FROM borrow b
+    WHERE b.copy_id = c.copy_id AND b.flag = true
+);
+
+CREATE OR REPLACE VIEW book_availability AS
+SELECT
+    bk.book_id,
+    COALESCE(tc.total, 0)::int AS total_copies,
+    COALESCE(fc.free, 0)::int  AS available_copies,
+    CASE
+        WHEN COALESCE(tc.total, 0) > 0 THEN COALESCE(fc.free, 0) > 0
+        ELSE NOT EXISTS (
+            SELECT 1 FROM borrow b
+            WHERE b.book_id = bk.book_id AND b.flag = true
+        )
+    END AS is_available
+FROM book bk
+LEFT JOIN (
+    SELECT book_id, COUNT(*) AS total FROM book_copy GROUP BY book_id
+) tc ON tc.book_id = bk.book_id
+LEFT JOIN (
+    SELECT book_id, COUNT(*) AS free FROM free_copy GROUP BY book_id
+) fc ON fc.book_id = bk.book_id;
