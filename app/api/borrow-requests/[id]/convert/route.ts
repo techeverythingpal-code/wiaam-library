@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { sql } from '@/lib/db';
 import { SESSION_COOKIE, verifySession } from '@/lib/session';
+import { checkCanBorrow, isUniqueViolation, parseCopyId, violatedConstraint } from '@/lib/borrow';
 
 export async function POST(
     request: Request,
@@ -27,17 +28,15 @@ export async function POST(
     const borrowId = Number(body.borrowId);
     const studentId = Number(body.studentId);
 
-    // The copy is optional here. The rules below decide if it is required.
-    const hasCopy =
-        body.copyId !== undefined && body.copyId !== null && String(body.copyId).trim() !== '';
-    const copyIdNum = hasCopy ? Number(body.copyId) : null;
+    // The copy is optional here. The shared rules decide if it is required.
+    const copyIdNum = parseCopyId(body.copyId);
 
     if (
         !Number.isInteger(requestId) ||
         !Number.isInteger(borrowId) ||
         borrowId <= 0 ||
         !Number.isInteger(studentId) ||
-        (hasCopy && !Number.isInteger(copyIdNum))
+        Number.isNaN(copyIdNum)
     ) {
         return NextResponse.json({ error: 'Invalid request', code: 'invalid' }, { status: 400 });
     }
@@ -73,53 +72,16 @@ export async function POST(
             );
         }
 
-        const copies = await sql`
-      SELECT copy_id FROM book_copy WHERE book_id = ${bookId}
-    `;
-
-        if (copies.length > 0) {
-            // This book has copies: the librarian must choose a free one.
-            if (!hasCopy) {
-                return NextResponse.json(
-                    { error: 'Choose which copy is borrowed', code: 'copy_required' },
-                    { status: 400 }
-                );
-            }
-
-            if (!copies.some((c) => Number(c.copy_id) === copyIdNum)) {
-                return NextResponse.json(
-                    { error: 'This copy does not belong to this book', code: 'invalid' },
-                    { status: 400 }
-                );
-            }
-
-            const activeForCopy = await sql`
-        SELECT borrow_id FROM borrow WHERE copy_id = ${copyIdNum} AND flag = true
-      `;
-            if (activeForCopy.length > 0) {
-                return NextResponse.json(
-                    { error: 'This copy is already checked out', code: 'book_taken' },
-                    { status: 409 }
-                );
-            }
-        } else {
-            // No copies: the book is borrowed as a single item.
-            if (hasCopy) {
-                return NextResponse.json(
-                    { error: 'This book has no copies', code: 'invalid' },
-                    { status: 400 }
-                );
-            }
-
-            const activeForBook = await sql`
-        SELECT borrow_id FROM borrow WHERE book_id = ${bookId} AND flag = true
-      `;
-            if (activeForBook.length > 0) {
-                return NextResponse.json(
-                    { error: 'This book is already checked out', code: 'book_taken' },
-                    { status: 409 }
-                );
-            }
+        // The shared rules: is a copy needed, does it belong to this book, is it free?
+        const problem = await checkCanBorrow(bookId, copyIdNum);
+        if (problem) {
+            // The convert form knows these codes: book_taken, copy_required.
+            // Anything else is shown as "invalid".
+            const code =
+                problem.code === 'book_taken' || problem.code === 'copy_required'
+                    ? problem.code
+                    : 'invalid';
+            return NextResponse.json({ error: problem.error, code }, { status: problem.status });
         }
 
         // Both statements succeed or both are rolled back.
@@ -135,6 +97,17 @@ export async function POST(
 
         return NextResponse.json({ success: true });
     } catch (err) {
+        // Two saves at the same moment: the database refused the second one (migration 003).
+        if (isUniqueViolation(err)) {
+            const takenNow = violatedConstraint(err).startsWith('borrow_one_active');
+            return NextResponse.json(
+                takenNow
+                    ? { error: 'This copy is already checked out', code: 'book_taken' }
+                    : { error: `Borrow ID ${borrowId} already exists`, code: 'borrow_id_exists' },
+                { status: 409 }
+            );
+        }
+
         console.error('Failed to convert borrow request:', err);
         return NextResponse.json({ error: 'Failed to convert request', code: 'server' }, { status: 500 });
     }

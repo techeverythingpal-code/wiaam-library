@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { sql } from '@/lib/db';
 import { SESSION_COOKIE, verifySession } from '@/lib/session';
+import { checkCanBorrow, isUniqueViolation, parseCopyId, violatedConstraint } from '@/lib/borrow';
 
 export async function POST(request: Request) {
     const cookieStore = await cookies();
@@ -11,7 +12,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const { borrowId, bookId, studentId, copyId } = await request.json();
+    const body = await request.json().catch(() => ({}));
+    const { borrowId, bookId, studentId } = body;
 
     if (!borrowId || !bookId || !studentId) {
         return NextResponse.json(
@@ -20,10 +22,9 @@ export async function POST(request: Request) {
         );
     }
 
-    const hasCopy = copyId !== undefined && copyId !== null && String(copyId).trim() !== '';
-    const copyIdNum = hasCopy ? Number(copyId) : null;
+    const copyIdNum = parseCopyId(body.copyId);
 
-    if (hasCopy && !Number.isInteger(copyIdNum)) {
+    if (Number.isNaN(copyIdNum)) {
         return NextResponse.json({ error: 'Invalid copy ID' }, { status: 400 });
     }
 
@@ -39,65 +40,13 @@ export async function POST(request: Request) {
             );
         }
 
-        const book = await sql`
-      SELECT book_id FROM book WHERE book_id = ${bookId}
-    `;
-
-        if (book.length === 0) {
-            return NextResponse.json({ error: 'Book not found' }, { status: 404 });
-        }
-
-        const copies = await sql`
-      SELECT copy_id FROM book_copy WHERE book_id = ${bookId}
-    `;
-
-        if (copies.length > 0) {
-            // This book has copies: a specific copy must be chosen.
-            if (!hasCopy) {
-                return NextResponse.json(
-                    { error: 'This book has copies. Choose which copy is borrowed.' },
-                    { status: 400 }
-                );
-            }
-
-            const copyBelongsToBook = copies.some((c) => Number(c.copy_id) === copyIdNum);
-
-            if (!copyBelongsToBook) {
-                return NextResponse.json(
-                    { error: 'This copy does not belong to this book' },
-                    { status: 400 }
-                );
-            }
-
-            const activeForCopy = await sql`
-        SELECT borrow_id FROM borrow WHERE copy_id = ${copyIdNum} AND flag = true
-      `;
-
-            if (activeForCopy.length > 0) {
-                return NextResponse.json(
-                    { error: 'This copy is already checked out' },
-                    { status: 409 }
-                );
-            }
-        } else {
-            // This book has no copies: it is borrowed as a single item, without a copy ID.
-            if (hasCopy) {
-                return NextResponse.json(
-                    { error: 'This book has no copies' },
-                    { status: 400 }
-                );
-            }
-
-            const activeForBook = await sql`
-        SELECT borrow_id FROM borrow WHERE book_id = ${bookId} AND flag = true
-      `;
-
-            if (activeForBook.length > 0) {
-                return NextResponse.json(
-                    { error: 'This book is already checked out' },
-                    { status: 409 }
-                );
-            }
+        // The shared rules: does the book exist, is a copy needed, is it free?
+        const problem = await checkCanBorrow(Number(bookId), copyIdNum);
+        if (problem) {
+            return NextResponse.json(
+                { error: problem.error, code: problem.code },
+                { status: problem.status }
+            );
         }
 
         await sql`
@@ -107,6 +56,17 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true });
     } catch (err) {
+        // Two saves at the same moment: the database refused the second one (migration 003).
+        if (isUniqueViolation(err)) {
+            const takenNow = violatedConstraint(err).startsWith('borrow_one_active');
+            return NextResponse.json(
+                takenNow
+                    ? { error: 'This copy is already checked out', code: 'book_taken' }
+                    : { error: `Borrow ID ${borrowId} already exists`, code: 'borrow_id_exists' },
+                { status: 409 }
+            );
+        }
+
         console.error('Failed to add borrow:', err);
         return NextResponse.json(
             { error: err instanceof Error ? err.message : 'Failed to add borrow' },
