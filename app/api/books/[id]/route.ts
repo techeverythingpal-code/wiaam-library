@@ -1,49 +1,56 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { sql } from '@/lib/db';
-import { SESSION_COOKIE, verifySession } from '@/lib/session';
+import { apiError, isAdmin, parseId, readJson, serverError } from '@/lib/api';
 
-async function checkAuth() {
-    const cookieStore = await cookies();
-    return await verifySession(cookieStore.get(SESSION_COOKIE)?.value);
+// Turns "" / null / undefined into null, and trims text.
+function optionalText(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    const text = value.trim();
+    return text === '' ? null : text;
 }
 
 export async function PUT(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const sessionUser = await checkAuth();
-    if (!sessionUser) {
-        return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (!(await isAdmin())) {
+        return apiError('notAuthenticated', 401);
     }
 
-    const { id } = await params;
-    const { bookName, auther, ageGroup, bookCover } = await request.json();
+    const bookId = parseId((await params).id);
+    if (bookId === null) {
+        return apiError('bookNotFound', 404);
+    }
+
+    const body = await readJson(request);
+    const bookName = optionalText(body.bookName);
+    const auther = optionalText(body.auther);
+    const ageGroup = optionalText(body.ageGroup);
+    const bookCover = optionalText(body.bookCover);
 
     if (!bookName || !auther) {
-        return NextResponse.json(
-            { error: 'Title and author are required' },
-            { status: 400 }
-        );
+        return apiError('bookTitleAuthorRequired', 400);
     }
 
     try {
-        await sql`
+        const updated = await sql`
       UPDATE book
       SET book_name = ${bookName},
           auther = ${auther},
           age_group = ${ageGroup},
           book_cover = ${bookCover}
-      WHERE book_id = ${id}
+      WHERE book_id = ${bookId}
+      RETURNING book_id
     `;
+
+        // Nothing was updated: the book does not exist (maybe it was just deleted).
+        if (updated.length === 0) {
+            return apiError('bookNotFound', 404);
+        }
 
         return NextResponse.json({ success: true });
     } catch (err) {
-        console.error('Failed to update book:', err);
-        return NextResponse.json(
-            { error: err instanceof Error ? err.message : 'Failed to update book' },
-            { status: 500 }
-        );
+        return serverError('Failed to update book', err);
     }
 }
 
@@ -51,46 +58,44 @@ export async function DELETE(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const sessionUser = await checkAuth();
-    if (!sessionUser) {
-        return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (!(await isAdmin())) {
+        return apiError('notAuthenticated', 401);
     }
 
-    const { id } = await params;
+    const bookId = parseId((await params).id);
+    if (bookId === null) {
+        return apiError('bookNotFound', 404);
+    }
 
     try {
         const activeBorrow = await sql`
-      SELECT borrow_id FROM borrow WHERE book_id = ${id} AND flag = true
+      SELECT borrow_id FROM borrow WHERE book_id = ${bookId} AND flag = true
     `;
 
         if (activeBorrow.length > 0) {
-            return NextResponse.json(
-                { error: 'Cannot delete a book that is currently borrowed' },
-                { status: 409 }
-            );
+            return apiError('bookBorrowedNow', 409);
         }
 
         // Cannot delete a book that was borrowed before (the loan history must stay correct).
         // This covers loans of the book itself and loans of any of its copies.
         const history = await sql`
-      SELECT borrow_id FROM borrow WHERE book_id = ${id} LIMIT 1
+      SELECT borrow_id FROM borrow WHERE book_id = ${bookId} LIMIT 1
     `;
 
         if (history.length > 0) {
-            return NextResponse.json(
-                { error: 'Cannot delete a book that has borrow history' },
-                { status: 409 }
-            );
+            return apiError('bookHasHistory', 409);
         }
 
-        await sql`DELETE FROM book WHERE book_id = ${id}`;
+        const deleted = await sql`
+      DELETE FROM book WHERE book_id = ${bookId} RETURNING book_id
+    `;
+
+        if (deleted.length === 0) {
+            return apiError('bookNotFound', 404);
+        }
 
         return NextResponse.json({ success: true });
     } catch (err) {
-        console.error('Failed to delete book:', err);
-        return NextResponse.json(
-            { error: err instanceof Error ? err.message : 'Failed to delete book' },
-            { status: 500 }
-        );
+        return serverError('Failed to delete book', err);
     }
 }

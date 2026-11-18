@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { sql } from '@/lib/db';
-import { SESSION_COOKIE, verifySession } from '@/lib/session';
-
-async function checkAuth() {
-    const cookieStore = await cookies();
-    return await verifySession(cookieStore.get(SESSION_COOKIE)?.value);
-}
+import { apiError, isAdmin, parseId, readJson, serverError } from '@/lib/api';
 
 const MAX_COPIES_AT_ONCE = 50;
 
@@ -18,26 +12,20 @@ export async function POST(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const sessionUser = await checkAuth();
-    if (!sessionUser) {
-        return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (!(await isAdmin())) {
+        return apiError('notAuthenticated', 401);
     }
 
-    const { id } = await params;
-    const bookId = Number(id);
-    const body = await request.json().catch(() => ({}));
+    const bookId = parseId((await params).id);
+    if (bookId === null) {
+        return apiError('bookNotFound', 404);
+    }
+
+    const body = await readJson(request);
     const count = body.count === undefined ? 1 : Number(body.count);
 
-    if (
-        !Number.isInteger(bookId) ||
-        !Number.isInteger(count) ||
-        count < 1 ||
-        count > MAX_COPIES_AT_ONCE
-    ) {
-        return NextResponse.json(
-            { error: `Number of copies must be between 1 and ${MAX_COPIES_AT_ONCE}` },
-            { status: 400 }
-        );
+    if (!Number.isInteger(count) || count < 1 || count > MAX_COPIES_AT_ONCE) {
+        return apiError('addCopiesRange', 400, { max: MAX_COPIES_AT_ONCE });
     }
 
     try {
@@ -61,16 +49,12 @@ export async function POST(
 
         // No book row was updated, so nothing was inserted.
         if (added.length === 0) {
-            return NextResponse.json({ error: 'Book not found' }, { status: 404 });
+            return apiError('bookNotFound', 404);
         }
 
         return NextResponse.json({ success: true, copies: added });
     } catch (err) {
-        console.error('Failed to add copy:', err);
-        return NextResponse.json(
-            { error: err instanceof Error ? err.message : 'Failed to add copy' },
-            { status: 500 }
-        );
+        return serverError('Failed to add copy', err);
     }
 }
 
@@ -80,63 +64,51 @@ export async function DELETE(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    const sessionUser = await checkAuth();
-    if (!sessionUser) {
-        return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (!(await isAdmin())) {
+        return apiError('notAuthenticated', 401);
     }
 
-    const { id } = await params;
-    const bookId = Number(id);
-    const { copyId } = await request.json();
-    const copyIdNum = Number(copyId);
+    const bookId = parseId((await params).id);
+    const body = await readJson(request);
+    const copyId = parseId(body.copyId);
 
-    if (!Number.isInteger(bookId) || !Number.isInteger(copyIdNum)) {
-        return NextResponse.json({ error: 'Invalid copy ID' }, { status: 400 });
+    if (bookId === null || copyId === null) {
+        return apiError('copyNotFound', 404);
     }
 
     try {
         // The copy must belong to this book
         const copy = await sql`
       SELECT copy_id FROM book_copy
-      WHERE copy_id = ${copyIdNum} AND book_id = ${bookId}
+      WHERE copy_id = ${copyId} AND book_id = ${bookId}
     `;
 
         if (copy.length === 0) {
-            return NextResponse.json({ error: 'Copy not found' }, { status: 404 });
+            return apiError('copyNotFound', 404);
         }
 
         // Cannot remove a copy that is currently borrowed
         const activeBorrow = await sql`
-      SELECT borrow_id FROM borrow WHERE copy_id = ${copyIdNum} AND flag = true
+      SELECT borrow_id FROM borrow WHERE copy_id = ${copyId} AND flag = true
     `;
 
         if (activeBorrow.length > 0) {
-            return NextResponse.json(
-                { error: 'Cannot delete a copy that is currently borrowed' },
-                { status: 409 }
-            );
+            return apiError('copyBorrowedNow', 409);
         }
 
         // Cannot remove a copy that has loan history (the history must stay correct)
         const history = await sql`
-      SELECT borrow_id FROM borrow WHERE copy_id = ${copyIdNum} LIMIT 1
+      SELECT borrow_id FROM borrow WHERE copy_id = ${copyId} LIMIT 1
     `;
 
         if (history.length > 0) {
-            return NextResponse.json(
-                { error: 'Cannot delete a copy that has borrow history' },
-                { status: 409 }
-            );
+            return apiError('copyHasHistory', 409);
         }
 
-        await sql`DELETE FROM book_copy WHERE copy_id = ${copyIdNum}`;
+        await sql`DELETE FROM book_copy WHERE copy_id = ${copyId}`;
 
         return NextResponse.json({ success: true });
     } catch (err) {
-        console.error('Failed to delete copy:', err);
-        return NextResponse.json(
-            { error: err instanceof Error ? err.message : 'Failed to delete copy' },
-            { status: 500 }
-        );
+        return serverError('Failed to delete copy', err);
     }
 }

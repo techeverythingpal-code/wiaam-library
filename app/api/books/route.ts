@@ -1,46 +1,46 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { sql } from '@/lib/db';
-import { SESSION_COOKIE, verifySession } from '@/lib/session';
+import { apiError, isAdmin, parseId, readJson, serverError } from '@/lib/api';
+import { isUniqueViolation } from '@/lib/borrow';
 
 const MAX_COPIES_AT_ONCE = 50;
 
+// Turns "" / null / undefined into null, and trims text.
+function optionalText(value: unknown): string | null {
+    if (typeof value !== 'string') return null;
+    const text = value.trim();
+    return text === '' ? null : text;
+}
+
 export async function POST(request: Request) {
-    const cookieStore = await cookies();
-    const sessionUser = await verifySession(cookieStore.get(SESSION_COOKIE)?.value);
-
-    if (!sessionUser) {
-        return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    if (!(await isAdmin())) {
+        return apiError('notAuthenticated', 401);
     }
 
-    const { bookId, copyCount, bookName, auther, ageGroup, bookCover } = await request.json();
+    const body = await readJson(request);
+    const bookName = optionalText(body.bookName);
+    const auther = optionalText(body.auther);
+    const ageGroup = optionalText(body.ageGroup);
+    const bookCover = optionalText(body.bookCover);
 
-    if (!bookId || !bookName || !auther) {
-        return NextResponse.json(
-            { error: 'Book ID, title, and author are required' },
-            { status: 400 }
-        );
+    if (!body.bookId || !bookName || !auther) {
+        return apiError('bookFieldsRequired', 400);
     }
 
-    const bookIdNum = Number(bookId);
+    const bookIdNum = parseId(body.bookId);
 
-    if (!Number.isInteger(bookIdNum) || bookIdNum <= 0) {
-        return NextResponse.json(
-            { error: 'Book ID must be a positive whole number' },
-            { status: 400 }
-        );
+    if (bookIdNum === null) {
+        return apiError('bookIdInvalid', 400);
     }
 
     // Number of copies is optional. Empty means "no copies yet".
+    const rawCount = body.copyCount;
     const hasCount =
-        copyCount !== undefined && copyCount !== null && String(copyCount).trim() !== '';
-    const count = hasCount ? Number(copyCount) : 0;
+        rawCount !== undefined && rawCount !== null && String(rawCount).trim() !== '';
+    const count = hasCount ? Number(rawCount) : 0;
 
     if (!Number.isInteger(count) || count < 0 || count > MAX_COPIES_AT_ONCE) {
-        return NextResponse.json(
-            { error: `Number of copies must be between 0 and ${MAX_COPIES_AT_ONCE}` },
-            { status: 400 }
-        );
+        return apiError('copyCountRange', 400, { max: MAX_COPIES_AT_ONCE });
     }
 
     try {
@@ -49,10 +49,7 @@ export async function POST(request: Request) {
     `;
 
         if (existingBook.length > 0) {
-            return NextResponse.json(
-                { error: `Book ID ${bookIdNum} already exists` },
-                { status: 409 }
-            );
+            return apiError('bookIdExists', 409, { id: bookIdNum });
         }
 
         // The book and its copies are saved together, or not at all.
@@ -71,10 +68,10 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ success: true });
     } catch (err) {
-        console.error('Failed to add book:', err);
-        return NextResponse.json(
-            { error: err instanceof Error ? err.message : 'Failed to add book' },
-            { status: 500 }
-        );
+        // Someone saved the same Book ID a moment earlier.
+        if (isUniqueViolation(err)) {
+            return apiError('bookIdExists', 409, { id: bookIdNum });
+        }
+        return serverError('Failed to add book', err);
     }
 }
