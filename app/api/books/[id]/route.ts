@@ -70,6 +70,19 @@ export async function DELETE(
             );
         }
 
+        // Cannot delete a book that was borrowed before (the loan history must stay correct).
+        // This covers loans of the book itself and loans of any of its copies.
+        const history = await sql`
+      SELECT borrow_id FROM borrow WHERE book_id = ${id} LIMIT 1
+    `;
+
+        if (history.length > 0) {
+            return NextResponse.json(
+                { error: 'Cannot delete a book that has borrow history' },
+                { status: 409 }
+            );
+        }
+
         await sql`DELETE FROM book WHERE book_id = ${id}`;
 
         return NextResponse.json({ success: true });

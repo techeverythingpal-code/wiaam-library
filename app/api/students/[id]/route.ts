@@ -69,6 +69,18 @@ export async function DELETE(
             );
         }
 
+        // Cannot delete a student who borrowed before (the loan history must stay correct).
+        const history = await sql`
+      SELECT borrow_id FROM borrow WHERE student_id = ${id} LIMIT 1
+    `;
+
+        if (history.length > 0) {
+            return NextResponse.json(
+                { error: 'Cannot delete a student who has borrow history' },
+                { status: 409 }
+            );
+        }
+
         await sql`DELETE FROM student WHERE student_id = ${id}`;
 
         return NextResponse.json({ success: true });
