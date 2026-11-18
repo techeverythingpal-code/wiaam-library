@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 import { Card, Button, Chip } from '@heroui/react';
 import PageHeader from '@/components/PageHeader';
 import ImportExcel from '@/components/ImportExcel';
+import CardCover from '@/components/CardCover';
 import Pagination, { PAGE_SIZE } from '@/components/Pagination';
 import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
@@ -81,17 +82,7 @@ export default async function AdminBooksPage({
                                     key={book.book_id}
                                     className="border-2 border-gray-100 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
                                 >
-                                    {book.book_cover ? (
-                                        <img
-                                            src={book.book_cover}
-                                            alt={book.book_name}
-                                            className="w-full h-48 object-cover"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-48 bg-gray-50 flex items-center justify-center text-5xl">
-                                            📖
-                                        </div>
-                                    )}
+                                    <CardCover url={book.book_cover} alt={book.book_name} />
                                     <Card.Content className="flex flex-col gap-3">
                                         <div>
                                             <p className="text-xs text-gray-400">#{book.book_id}</p>
