@@ -4,6 +4,7 @@ import { getLocale } from '@/lib/i18n-server';
 import { getRequestText } from '@/lib/i18n-requests';
 import { getCopiesText, copyLabel } from '@/lib/i18n-copies';
 import { parseId } from '@/lib/api';
+import { getNextBorrowId } from '@/lib/borrow';
 import ConvertForm from './convert-form';
 
 interface RequestRow {
@@ -64,13 +65,6 @@ async function getFreeCopies(bookId: number): Promise<FreeCopy[]> {
     WHERE book_id = ${bookId}
     ORDER BY copy_number ASC
   ` as FreeCopy[];
-}
-
-async function getNextBorrowId(): Promise<number> {
-    const rows = await sql`
-    SELECT COALESCE(MAX(borrow_id), 0)::int + 1 AS next_id FROM borrow
-  ` as { next_id: number }[];
-    return rows[0].next_id;
 }
 
 export default async function ConvertRequestPage({

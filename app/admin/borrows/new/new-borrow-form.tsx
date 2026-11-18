@@ -42,6 +42,7 @@ export default function NewBorrowForm({
     students,
     books,
     copies,
+    suggestedBorrowId,
     locale,
     text,
     copiesText,
@@ -49,12 +50,14 @@ export default function NewBorrowForm({
     students: Student[];
     books: Book[];
     copies: FreeCopy[];
+    suggestedBorrowId: number;
     locale: Locale;
     text: NewBorrowText;
     copiesText: CopiesText;
 }) {
     const router = useRouter();
-    const [borrowId, setBorrowId] = useState('');
+    // Filled in with the next free ID; the librarian can still change it.
+    const [borrowId, setBorrowId] = useState(String(suggestedBorrowId));
     const [bookId, setBookId] = useState<Key | null>(null);
     const [copyId, setCopyId] = useState<Key | null>(null);
     const [studentId, setStudentId] = useState<Key | null>(null);
@@ -69,7 +72,11 @@ export default function NewBorrowForm({
 
     function handleBookChange(key: Key | null) {
         setBookId(key);
-        setCopyId(null); // a copy from the previous book must not stay selected
+        // A copy from the previous book must not stay selected.
+        // If the new book has exactly one free copy, choose it automatically
+        // (the convert page does the same).
+        const free = key === null ? [] : copies.filter((c) => c.book_id === Number(key));
+        setCopyId(free.length === 1 ? free[0].copy_id : null);
     }
 
     async function handleSubmit(e: React.FormEvent) {
@@ -105,7 +112,7 @@ export default function NewBorrowForm({
             router.push('/admin/borrows');
             router.refresh();
         } else {
-            const data = await res.json();
+            const data = await res.json().catch(() => ({}));
             setError(data.error ?? text.failedToCreate);
         }
     }

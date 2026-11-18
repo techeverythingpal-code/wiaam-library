@@ -3,6 +3,7 @@ import { sql } from '@/lib/db';
 // Shared rules for lending a book. Used by:
 //   - app/api/borrows/route.ts                      (New Borrow form)
 //   - app/api/borrow-requests/[id]/convert/route.ts (turning a request into a borrow)
+//   - the New Borrow and convert pages (getNextBorrowId)
 
 export type BorrowErrorCode =
     | 'book_not_found'
@@ -23,6 +24,16 @@ export function parseCopyId(value: unknown): number | null {
     if (value === undefined || value === null || String(value).trim() === '') return null;
     const n = Number(value);
     return Number.isInteger(n) ? n : NaN;
+}
+
+// The next free borrow ID (highest so far + 1), to fill in the form for the librarian.
+// It is only a suggestion: the librarian can change it, and the save still checks
+// that the ID is not taken.
+export async function getNextBorrowId(): Promise<number> {
+    const rows = await sql`
+    SELECT COALESCE(MAX(borrow_id), 0)::int + 1 AS next_id FROM borrow
+  ` as { next_id: number }[];
+    return rows[0].next_id;
 }
 
 // Checks that this book (and copy, if any) can be lent right now.

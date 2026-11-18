@@ -3,6 +3,7 @@ import NewBorrowForm from './new-borrow-form';
 import { getLocale } from '@/lib/i18n-server';
 import { t } from '@/lib/i18n';
 import { getCopiesText } from '@/lib/i18n-copies';
+import { getNextBorrowId } from '@/lib/borrow';
 
 interface Student {
     student_id: number;
@@ -49,10 +50,11 @@ async function getFreeCopies(): Promise<FreeCopy[]> {
 }
 
 export default async function NewBorrowPage() {
-    const [students, books, copies, locale] = await Promise.all([
+    const [students, books, copies, suggestedBorrowId, locale] = await Promise.all([
         getAvailableStudents(),
         getAvailableBooks(),
         getFreeCopies(),
+        getNextBorrowId(),
         getLocale(),
     ]);
 
@@ -63,6 +65,7 @@ export default async function NewBorrowPage() {
             students={students}
             books={books}
             copies={copies}
+            suggestedBorrowId={suggestedBorrowId}
             locale={locale}
             text={{ ...newBorrow, saving: common.saving }}
             copiesText={getCopiesText(locale)}
